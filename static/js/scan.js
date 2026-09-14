@@ -79,22 +79,24 @@ async function getErrorMessage(resp, fallback) {
 }
 
 // Toggle in-flight loading states across the verdict gauge and result panels.
+// While loading: pulse the gauge and show SCANNING placeholders.
+// When done: only STOP the pulse and leave any rendered verdict untouched, so a
+// successful analysis is never wiped by its own finally block. Callers restore
+// the idle card explicitly via restoreIdleVerdict() on failure/tab-change.
 function setAnalysisLoading(loading) {
   const dialCircle = document.getElementById("dialCircle");
-  const dialScore = document.getElementById("dialScore");
-  if (dialCircle && loading) dialCircle.classList.add("gauge-loading");
-  if (dialCircle && !loading) dialCircle.classList.remove("gauge-loading");
-
-  const score = loading ? "…" : "--%";
-  if (dialScore) dialScore.textContent = score;
-
   const severityBadge = document.getElementById("severityBadge");
   const categoryTitle = document.getElementById("categoryTitle");
   const socActionText = document.getElementById("socActionText");
   const modelConfidence = document.getElementById("modelConfidence");
   const confidenceBadge = document.getElementById("confidencePercentage");
 
+  if (dialCircle) dialCircle.classList.toggle("gauge-loading", loading);
+
   if (loading) {
+    const dialScore = document.getElementById("dialScore");
+    if (dialScore) dialScore.textContent = "…";
+
     const bg = "rgba(14, 116, 144, 0.25)";
     const accent = "#22d3ee";
     if (severityBadge) {
@@ -114,24 +116,36 @@ function setAnalysisLoading(loading) {
     }
     announce("Analysis in progress");
   } else {
-    // Restore idle defaults — also returns failed/aborted analyses to neutral.
-    const bg = "rgba(100, 116, 139, 0.12)";
-    if (severityBadge) {
-      severityBadge.textContent = "AWAITING SCAN";
-      severityBadge.style.background = bg;
-      severityBadge.style.color = "var(--text-muted)";
-      severityBadge.style.border = "1px solid var(--border-color)";
-    }
-    if (categoryTitle) categoryTitle.textContent = "Ready to Inspect";
-    if (socActionText) socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> Awaiting verdict…`;
-    if (modelConfidence) modelConfidence.textContent = "RF: --% | GBM: --%";
-    if (confidenceBadge) {
-      confidenceBadge.textContent = "CONFIDENCE: --%";
-      confidenceBadge.style.background = bg;
-      confidenceBadge.style.color = "var(--text-muted)";
-      confidenceBadge.style.border = "1px solid var(--border-color)";
-    }
     updateButtonStates();
+  }
+}
+
+// Restore the verdict card to a neutral "awaiting scan" state (used on
+// failures, aborts and tab switches — never on a successful render).
+function restoreIdleVerdict() {
+  const dialScore = document.getElementById("dialScore");
+  if (dialScore) dialScore.textContent = "--%";
+  const severityBadge = document.getElementById("severityBadge");
+  const categoryTitle = document.getElementById("categoryTitle");
+  const socActionText = document.getElementById("socActionText");
+  const modelConfidence = document.getElementById("modelConfidence");
+  const confidenceBadge = document.getElementById("confidencePercentage");
+
+  const bg = "rgba(100, 116, 139, 0.12)";
+  if (severityBadge) {
+    severityBadge.textContent = "AWAITING SCAN";
+    severityBadge.style.background = bg;
+    severityBadge.style.color = "var(--text-muted)";
+    severityBadge.style.border = "1px solid var(--border-color)";
+  }
+  if (categoryTitle) categoryTitle.textContent = "Ready to Inspect";
+  if (socActionText) socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> Awaiting verdict…`;
+  if (modelConfidence) modelConfidence.textContent = "RF: --% | GBM: --%";
+  if (confidenceBadge) {
+    confidenceBadge.textContent = "CONFIDENCE: --%";
+    confidenceBadge.style.background = bg;
+    confidenceBadge.style.color = "var(--text-muted)";
+    confidenceBadge.style.border = "1px solid var(--border-color)";
   }
 }
 
@@ -139,6 +153,7 @@ function setAnalysisLoading(loading) {
 // so results from a previous tab never linger.
 function resetResultPanels() {
   setAnalysisLoading(false);
+  restoreIdleVerdict();
 
   const headerList = document.getElementById("headerMismatchesList");
   if (headerList) {
@@ -408,6 +423,8 @@ function setupEventListeners() {
         });
         if (!resp.ok) {
           const msg = await getErrorMessage(resp, `URL inspection failed (HTTP ${resp.status}).`);
+          currentRenderFn = null;
+          restoreIdleVerdict();
           showToast(msg, "error", 6000);
           announce("URL inspection failed");
           return;
@@ -419,6 +436,8 @@ function setupEventListeners() {
         loadScanHistory();
         announce(`URL analysis complete. Risk score ${data.risk_score} percent`);
       } catch (e) {
+        currentRenderFn = null;
+        restoreIdleVerdict();
         showToast(`URL inspection failed: ${e && e.message ? e.message : "network error"}`, "error", 6000);
         console.error(e);
       } finally {
@@ -452,6 +471,8 @@ function setupEventListeners() {
         });
         if (!resp.ok) {
           const msg = await getErrorMessage(resp, `Text analysis failed (HTTP ${resp.status}).`);
+          currentRenderFn = null;
+          restoreIdleVerdict();
           showToast(msg, "error", 6000);
           announce("Text analysis failed");
           return;
@@ -462,6 +483,8 @@ function setupEventListeners() {
         renderTextAnalysisResults(data, text);
         loadScanHistory();
       } catch (e) {
+        currentRenderFn = null;
+        restoreIdleVerdict();
         showToast(`Text analysis failed: ${e && e.message ? e.message : "network error"}`, "error", 6000);
         console.error(e);
       } finally {
@@ -509,6 +532,8 @@ function setupEventListeners() {
         });
         if (!resp.ok) {
           const msg = await getErrorMessage(resp, `Upload analysis failed (HTTP ${resp.status}).`);
+          currentRenderFn = null;
+          restoreIdleVerdict();
           showToast(msg, "error", 6000);
           announce("Upload analysis failed");
           return;
@@ -521,6 +546,8 @@ function setupEventListeners() {
         showToast(`Upload analyzed: ${data.filename || file.name}`, "success");
         announce(`Upload analysis complete for ${data.filename || file.name}`);
       } catch (err) {
+        currentRenderFn = null;
+        restoreIdleVerdict();
         showToast(`Upload failed: ${err && err.message ? err.message : "network error"}`, "error", 6000);
         console.error(err);
       } finally {
@@ -602,6 +629,8 @@ async function runEmailAnalysis(rawEml) {
     loadScanHistory();
     announce(`Analysis complete. Threat probability ${Math.round((data.prediction?.probability ?? 0) * 100)} percent`);
   } catch (err) {
+    currentRenderFn = null;
+    restoreIdleVerdict();
     showToast(`Error executing detection engine: ${err && err.message ? err.message : "ensure the FastAPI server is running."}`, "error", 7000);
     console.error(err);
   } finally {
@@ -1154,10 +1183,12 @@ async function openSandboxModal(targetUrl) {
     }
     const data = await resp.json();
     currentAnalysisData = data;
-    currentRenderFn = () => {
-      if (sbModalActive()) applySandboxPreview(currentAnalysisData);
-    };
-    applySandboxPreview(data);
+    if (sbModalActive()) {
+      currentRenderFn = () => {
+        if (sbModalActive()) applySandboxPreview(currentAnalysisData);
+      };
+      applySandboxPreview(data);
+    }
   } catch (err) {
     renderSandboxError(iframe, targetUrl, err && err.message ? err.message : null);
     showToast(`Sandbox inspection failed: ${err && err.message ? err.message : "network error"}`, "error", 6000);
