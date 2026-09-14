@@ -1,0 +1,29 @@
+# Credentials and Environment Variables (Critical)
+.env
+*.pem
+*.key
+
+# Python caches and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+
+# Node.js dependencies (if using JavaScript)
+node_modules/
+npm-debug.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE and Editor directories
+.vscode/
+.idea/
+
+# Misc
+.lock
+downloads/

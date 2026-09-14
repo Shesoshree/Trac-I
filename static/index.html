@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scam Detective - AI-Powered Scam & Phishing Detection</title>
+  <meta name="description" content="Protect yourself from scams with our AI-powered detection tool. Analyze emails, text messages, homoglyph URLs, and header authentication.">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a class="brand-link" href="/">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <span>Scam Detective</span>
+      </a>
+
+      <nav class="nav-links">
+        <a class="nav-item active" href="/">Home</a>
+        <a class="nav-item" href="/how-it-works">How It Works</a>
+        <a class="nav-item" href="/extension">Extension</a>
+        <a class="nav-item" href="/disposable">Disposable Checker</a>
+        <a class="nav-item" href="/customize">Defense Studio</a>
+        <a class="nav-item" href="/scan">AI Scanner</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="themeToggle" class="theme-btn" title="Toggle Light/Dark Theme">
+          <svg id="sunIcon" style="display:none;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <svg id="moonIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+        <a class="btn btn-accent" href="/scan">Scan Now</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div>
+        <div class="hero-pill">
+          <span class="pulse-dot"></span>
+          AI-Powered Phishing & Zero-Day Threat Engine
+        </div>
+        <h1 class="hero-title">Protect Yourself from Scams with <span>AI</span></h1>
+        <p class="hero-desc">
+          Scam Detective uses multi-vector AI to analyze raw email headers, sentiment-driven urgency, and deceptive homoglyph URLs to detect sophisticated spear-phishing attacks before credentials are compromised.
+        </p>
+        <div class="hero-buttons">
+          <a class="btn btn-primary" href="/scan">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Launch AI Scanner
+          </a>
+          <a class="btn btn-outline" href="/extension">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle>
+              <line x1="21.17" x2="12" y1="8" y2="8"></line><line x1="3.95" x2="8.54" y1="6.06" y2="14"></line>
+              <line x1="10.88" x2="15.46" y1="21.94" y2="14"></line>
+            </svg>
+            Chrome Extension
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hud-badge-card">
+          <div class="hud-header">
+            <div class="hud-title">
+              <span class="pulse-dot"></span>
+              REAL-TIME THREAT TELEMETRY
+            </div>
+            <span style="font-size: 11px; color: #94a3b8; font-family: monospace;">ST-DEFENSE-V2.4</span>
+          </div>
+          
+          <div style="margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+              <span style="color:#94a3b8;">Active Threat Classification</span>
+              <span style="color:#f87171; font-weight:700;">CRITICAL SPEAR-PHISH</span>
+            </div>
+            <div style="background:#0f172a; border-radius:4px; height:8px; overflow:hidden;">
+              <div style="width: 94.8%; background: linear-gradient(90deg, #f59e0b, #ef4444); height:100%;"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:12px; font-family:monospace;">
+            <div style="display:flex; justify-content:space-between; padding:6px 10px; background:rgba(0,0,0,0.25); border-radius:4px;">
+              <span style="color:#94a3b8;">Homoglyph Vector</span>
+              <span style="color:#f87171;">Cyrillic U+043E in Domain</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:6px 10px; background:rgba(0,0,0,0.25); border-radius:4px;">
+              <span style="color:#94a3b8;">Sender Alignment</span>
+              <span style="color:#f87171;">SPF FAIL / DMARC QUARANTINE</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:6px 10px; background:rgba(0,0,0,0.25); border-radius:4px;">
+              <span style="color:#94a3b8;">NLP Urgency Levers</span>
+              <span style="color:#fbbf24;">24h Clearance Suspension Lure</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Quick Scan Section -->
+  <section class="container" style="padding-top: 40px; padding-bottom: 20px;">
+    <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-md);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 700;">Quick URL & Phish Inspector</h2>
+          <p style="font-size: 14px; color: var(--text-muted);">Paste any suspicious URL or email snippet for instant AI analysis.</p>
+        </div>
+        <a href="/scan" style="font-size: 13px; font-weight: 600; color: #0284c7; display: flex; align-items: center; gap: 4px;">
+          Open Full Triage Console &rarr;
+        </a>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+        <input type="text" id="homeQuickInput" placeholder="e.g. https://login-micrоsoft365-verify.com or https://xn--cmmc-d-81a.xyz" 
+               style="flex: 1; min-width: 280px; padding: 12px 16px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-main); font-size: 14px; outline: none;" />
+        <button id="homeQuickBtn" class="btn btn-accent" style="padding: 12px 24px;">
+          Analyze Link
+        </button>
+      </div>
+
+      <div id="homeQuickResult" style="display: none; padding: 18px; border-radius: var(--radius-sm); background: var(--bg-input); border: 1px solid var(--border-color);">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Spam vs Scams Comparison Section -->
+  <section class="container">
+    <div class="section-header">
+      <h2 class="section-title">Spam versus Scams - How Are They Different?</h2>
+      <p class="section-desc">
+        Understanding the difference between spam and scams is crucial for your safety. While spam filters block annoying junk advertisements, Scam Detective specializes in detecting weaponized attacks designed to steal your credentials and data.
+      </p>
+    </div>
+
+    <div class="comparison-grid">
+      <!-- Card 1 -->
+      <div class="comparison-card">
+        <div class="card-icon-box yellow">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3 class="comp-title">Intent & Severity</h3>
+        <div class="comp-subitem spam">
+          <span class="comp-label" style="color: #d97706;">Spam is annoying</span>
+          Unwanted promotional messages that clutter your inbox but generally do not pose active cybersecurity threats.
+        </div>
+        <div class="comp-subitem scam">
+          <span class="comp-label" style="color: #dc2626;">Scams are malicious</span>
+          Deliberately weaponized to steal credentials, execute wire fraud, harvest enterprise SSO tokens, or deploy ransomware.
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="comparison-card">
+        <div class="card-icon-box blue">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+          </svg>
+        </div>
+        <h3 class="comp-title">Purpose & Goal</h3>
+        <div class="comp-subitem spam">
+          <span class="comp-label" style="color: #2563eb;">Spam advertises</span>
+          Commercial sellers attempting to promote products, discount coupons, or newsletter subscriptions.
+        </div>
+        <div class="comp-subitem scam">
+          <span class="comp-label" style="color: #dc2626;">Scams steal & compromise</span>
+          Adversaries impersonating IT Directors, HR executives, or Microsoft 365 to harvest passwords and corporate intelligence.
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="comparison-card">
+        <div class="card-icon-box green">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 12h20"></path><path d="M20 12l-4-4"></path><path d="M20 12l-4 4"></path>
+          </svg>
+        </div>
+        <h3 class="comp-title">Transparency & Deception</h3>
+        <div class="comp-subitem spam">
+          <span class="comp-label" style="color: #16a34a;">Spam is clear what it is</span>
+          Promotional layout with standard sender details and functional unsubscribe links.
+        </div>
+        <div class="comp-subitem scam">
+          <span class="comp-label" style="color: #dc2626;">Scams disguise themselves</span>
+          Uses deceptive Cyrillic homoglyphs, newly registered domains with valid SSL, zero-font hidden text, and urgency coercion.
+        </div>
+      </div>
+    </div>
+
+    <!-- Banner CTA inside section -->
+    <div class="banner-cta">
+      <h3 class="banner-title">Scam Detective Focuses on the Real Threats</h3>
+      <p class="banner-desc">
+        Standard email gateways lag 24 to 72 hours on zero-day domains. Scam Detective's heuristic and ML feature extraction instantly pinpoints weaponized attacks.
+      </p>
+      <a class="btn btn-primary" href="/scan">Scan for Scams Now</a>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section class="container" style="background: var(--bg-surface); border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+    <div class="section-header">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-desc">
+        Our multi-dimensional AI pipeline extracts hundreds of data points in milliseconds to evaluate email and link authenticity.
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3 class="step-title">Submit Content</h3>
+        <p class="step-desc">Paste raw email headers, body text, or embedded URLs. You can also drag-and-drop .eml files directly.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3 class="step-title">AI Engine Analysis</h3>
+        <p class="step-desc">Our engine extracts SPF/DKIM/DMARC status, decodes IDN homoglyphs, measures Shannon entropy, and runs NLP urgency classifiers.</p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3 class="step-title">Detailed Triage Report</h3>
+        <p class="step-desc">Receive a 0-100% calibrated threat score, explainable AI risk contribution bars, and sandboxed safe link previews.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="brand-logo-icon" style="width: 28px; height: 28px; border-radius: 6px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <span style="font-weight: 600; color: #fff;">Scam Detective</span>
+        <span>&bull; &copy; 2026 All Rights Reserved</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/extension">Chrome Extension</a>
+        <a href="/scan">AI Scanner</a>
+        <a href="/how-it-works">How It Works</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

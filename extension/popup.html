@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scam Detective</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="shield-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <span class="brand-name">Scam Detective</span>
+      </div>
+      <span class="version-tag">AI v2.4</span>
+    </header>
+
+    <!-- Main Threat Score Card -->
+    <section class="score-card">
+      <div class="score-gauge">
+        <div class="score-circle" id="scoreCircle">
+          <span class="score-value" id="scoreValue">0%</span>
+          <span class="score-subtext">THREAT</span>
+        </div>
+      </div>
+      <div class="score-info">
+        <div class="status-badge safe" id="statusBadge">VERIFIED SAFE</div>
+        <div class="target-domain" id="targetDomain">Checking active tab...</div>
+      </div>
+    </section>
+
+    <!-- Current Tab Details -->
+    <section class="details-section">
+      <div class="metric-row">
+        <span class="metric-label">Homoglyph / Punycode</span>
+        <span class="metric-value safe-text" id="homoglyphStatus">None Detected</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Brand Impersonation</span>
+        <span class="metric-value safe-text" id="brandStatus">Clean</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">Domain Shannon Entropy</span>
+        <span class="metric-value" id="entropyStatus">2.1 (Normal)</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-label">SSL & Infrastructure</span>
+        <span class="metric-value" id="sslStatus">HTTPS Active</span>
+      </div>
+    </section>
+
+    <!-- Quick Scan Input -->
+    <section class="quick-scan">
+      <div class="input-wrap">
+        <input type="text" id="quickInput" placeholder="Paste URL or email text..." />
+        <button id="quickScanBtn">Analyze</button>
+      </div>
+      <div id="quickResult" class="quick-result-box" style="display: none;"></div>
+    </section>
+
+    <!-- Footer Links -->
+    <footer class="footer">
+      <button id="openConsoleBtn" class="primary-btn">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        Open Triage Console
+      </button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

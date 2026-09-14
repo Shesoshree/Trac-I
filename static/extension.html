@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scam Detective Browser Extension - AI Phishing Defense for Chrome</title>
+  <meta name="description" content="Protect yourself from online scams in real-time with our powerful Chrome extension. Get instant scam detection as you browse the web. Compatible with Gmail.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* In-Browser Extension Simulator Styles */
+    .simulator-container {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      margin: 40px auto;
+      max-width: 960px;
+    }
+
+    .browser-toolbar {
+      background: #1e293b;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .browser-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot.red { background: #ef4444; }
+    .dot.yellow { background: #f59e0b; }
+    .dot.green { background: #10b981; }
+
+    .browser-address-bar {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .browser-ext-icon {
+      background: #0284c7;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s;
+    }
+
+    .browser-ext-icon:hover {
+      transform: scale(1.08);
+    }
+
+    .badge-counter {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: white;
+      font-size: 9px;
+      font-weight: bold;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .browser-viewport {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      min-height: 480px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    [data-theme="dark"] .browser-viewport {
+      background: #090e17;
+      color: #f8fafc;
+    }
+
+    .sim-email-view {
+      padding: 24px;
+      border-right: 1px solid var(--border-color);
+      overflow-y: auto;
+    }
+
+    .sim-popup-col {
+      background: #0f172a;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .feature-check-item svg {
+      color: #0284c7;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .install-step {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-badge {
+      width: 32px;
+      height: 32px;
+      background: #0284c7;
+      color: white;
+      font-weight: bold;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a class="brand-link" href="/">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+        </div>
+        <span>Scam Detective</span>
+      </a>
+
+      <nav class="nav-links">
+        <a class="nav-item" href="/">Home</a>
+        <a class="nav-item" href="/how-it-works">How It Works</a>
+        <a class="nav-item active" href="/extension">Extension</a>
+        <a class="nav-item" href="/disposable">Disposable Checker</a>
+        <a class="nav-item" href="/customize">Defense Studio</a>
+        <a class="nav-item" href="/scan">AI Scanner</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="themeToggle" class="theme-btn" title="Toggle Light/Dark Theme">
+          <svg id="sunIcon" style="display:none;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <svg id="moonIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+        <a class="btn btn-accent" href="/scan">Scan Now</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Header for Extension -->
+  <section class="hero" style="text-align: center; padding: 60px 20px 40px;">
+    <div style="max-width: 850px; margin: 0 auto;">
+      <div class="hero-pill" style="margin: 0 auto 20px;">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle>
+          <line x1="21.17" x2="12" y1="8" y2="8"></line><line x1="3.95" x2="8.54" y1="6.06" y2="14"></line>
+          <line x1="10.88" x2="15.46" y1="21.94" y2="14"></line>
+        </svg>
+        Google Chrome Extension &bull; Manifest V3 Certified
+      </div>
+
+      <h1 class="hero-title" style="font-size: 44px; margin-bottom: 16px;">
+        Scam Detective <span>Browser Extension</span>
+      </h1>
+      
+      <p class="hero-desc" style="margin: 0 auto 28px; font-size: 19px;">
+        Protect yourself from online scams in real-time with our powerful Chrome extension. Get instant scam detection as you browse the web.
+      </p>
+
+      <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+        <a class="btn btn-accent" href="/api/download/extension" download="scam-detective-extension.zip" style="font-size: 15px; padding: 14px 28px;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" x2="12" y1="15" y2="3"></line>
+          </svg>
+          Download Extension (.ZIP)
+        </a>
+        <a class="btn btn-outline" href="#simulator" style="font-size: 15px; padding: 14px 24px;">
+          Test In-Browser Simulator
+        </a>
+      </div>
+
+      <p style="font-size: 13px; color: #94a3b8; margin-top: 14px;">
+        Free extension &bull; Compatible with Gmail, Outlook Web, and all Chromium browsers
+      </p>
+    </div>
+  </section>
+
+  <!-- Interactive Live Simulator Section -->
+  <section class="container" id="simulator" style="padding-top: 20px;">
+    <div class="section-header" style="margin-bottom: 24px;">
+      <h2 class="section-title">Interactive Chrome Extension Simulator</h2>
+      <p class="section-desc">Experience how Scam Detective actively protects your inbox in real time right in your browser!</p>
+    </div>
+
+    <!-- Browser Mockup -->
+    <div class="simulator-container">
+      <div class="browser-toolbar">
+        <div class="browser-dots">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="browser-address-bar">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>https://mail.google.com/mail/u/0/#inbox/spearphish-defense-alert</span>
+        </div>
+        <div class="browser-ext-icon" id="simExtIcon" title="Scam Detective Active">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <div class="badge-counter">1</div>
+        </div>
+      </div>
+
+      <div class="browser-viewport">
+        <!-- Left: Gmail Email Simulation -->
+        <div class="sim-email-view">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+            <div>
+              <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 4px; color: #0f172a;" id="simEmailSubject">
+                URGENT: Mandatory Defense Clearance Re-Certification
+              </h3>
+              <div style="font-size: 13px; color: #64748b;">
+                From: <strong>DoD Defense Cyber Directorate</strong> &lt;compliance@defense-cybersec-notice.xyz&gt;
+              </div>
+            </div>
+            <span style="font-size: 11px; background: #fee2e2; color: #ef4444; padding: 3px 8px; border-radius: 4px; font-weight: bold;">
+              SUSPICIOUS EMAIL
+            </span>
+          </div>
+
+          <div style="font-size: 14px; line-height: 1.6; color: #334155;">
+            <p style="margin-bottom: 12px;">Attention Personnel,</p>
+            <p style="margin-bottom: 12px;">
+              Your defense security clearance protocol must be re-certified within 24 hours. Failure to comply will result in immediate suspension.
+            </p>
+            
+            <!-- Injected Link with Scam Detective Warning Badge -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin: 18px 0;">
+              <span style="font-size: 12px; color: #64748b; display: block; margin-bottom: 4px;">Embedded Action Link:</span>
+              <a href="javascript:void(0);" id="simTestLink" style="color: #0284c7; font-weight: 600; text-decoration: underline;">
+                https://xn--cmmc-d-81a.xyz/portal/verify
+              </a>
+              <span style="display: inline-flex; align-items: center; gap: 4px; background: #ef4444; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle;">
+                &#9888; Homoglyph Phish Link!
+              </span>
+            </div>
+
+            <p style="font-size: 13px; color: #64748b;">
+              Hover over or click the extension on the right to inspect real-time detection telemetry.
+            </p>
+          </div>
+        </div>
+
+        <!-- Right: In-Browser Simulated Extension Popup -->
+        <div class="sim-popup-col">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="shield-icon" style="width: 26px; height: 26px;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </div>
+              <span style="font-size: 14px; font-weight: bold; color: #fff;">Scam Detective</span>
+            </div>
+            <span style="font-size: 10px; background: #334155; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-weight: 600;">ACTIVE</span>
+          </div>
+
+          <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 52px; height: 52px; border-radius: 50%; border: 4px solid #ef4444; background: rgba(239, 68, 68, 0.1); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <span style="font-size: 14px; font-weight: 800; color: #fff;">95%</span>
+              <span style="font-size: 8px; color: #94a3b8;">RISK</span>
+            </div>
+            <div>
+              <div style="font-size: 11px; font-weight: bold; background: rgba(239,68,68,0.25); color: #f87171; padding: 2px 6px; border-radius: 4px; width: fit-content;">CRITICAL PHISH</div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 4px; font-family: monospace;">xn--cmmc-d-81a.xyz</div>
+            </div>
+          </div>
+
+          <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px; font-size: 11px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94a3b8;">Homoglyphs:</span>
+              <span style="color: #f87171; font-weight: bold;">Cyrillic 'о' Detected</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94a3b8;">Brand Target:</span>
+              <span style="color: #f87171; font-weight: bold;">Defense Portal</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: #94a3b8;">Entropy:</span>
+              <span style="color: #fbbf24; font-weight: bold;">3.89 (Elevated)</span>
+            </div>
+          </div>
+
+          <a href="/scan" class="btn btn-accent btn-sm" style="width: 100%; margin-top: auto;">
+            Launch Full Triage Console &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Pillars -->
+  <section class="container" style="padding-top: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 50px;">
+      <div class="feature-card">
+        <div class="card-icon-box blue">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+          </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700;">Real-Time Protection</h3>
+        <p style="font-size: 14px; color: var(--text-muted);">
+          Automatically scans incoming web pages, links, and Gmail messages as you browse. Get instant warnings before you submit credentials.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="card-icon-box yellow">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700;">Lightning Fast</h3>
+        <p style="font-size: 14px; color: var(--text-muted);">
+          Sub-millisecond client heuristics combined with asynchronous cloud ML scoring ensure zero lag and instant browsing responsiveness.
+        </p>
+      </div>
+
+      <div class="feature-card">
+        <div class="card-icon-box green">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700;">Privacy First</h3>
+        <p style="font-size: 14px; color: var(--text-muted);">
+          Your private browsing remains private. Heuristics execute locally in browser memory without harvesting personal browsing histories.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How to Install Unpacked Section -->
+  <section class="container" style="background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border-color); padding: 40px 30px;">
+    <div class="section-header" style="margin-bottom: 30px;">
+      <h2 class="section-title">How to Install in 3 Easy Steps</h2>
+      <p class="section-desc">Install directly into Google Chrome, Microsoft Edge, or Brave using Developer Mode.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; max-width: 780px; margin: 0 auto;">
+      <div class="install-step">
+        <div class="step-badge">1</div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Download and Unzip</h4>
+          <p style="font-size: 14px; color: var(--text-muted);">
+            Click <a href="/api/download/extension" style="color: #0284c7; font-weight: bold; text-decoration: underline;">Download Extension (.ZIP)</a> and extract the folder to your computer.
+          </p>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-badge">2</div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Open Extensions in Chrome</h4>
+          <p style="font-size: 14px; color: var(--text-muted);">
+            Navigate to <code>chrome://extensions</code> (or <code>edge://extensions</code>) and toggle the <strong>"Developer mode"</strong> switch in the top right.
+          </p>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-badge">3</div>
+        <div>
+          <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 4px;">Click "Load unpacked"</h4>
+          <p style="font-size: 14px; color: var(--text-muted);">
+            Click the <strong>Load unpacked</strong> button and select the extracted <code>extension</code> folder. Scam Detective is now active!
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Extension Features Checklist -->
+  <section class="container">
+    <div class="section-header" style="margin-bottom: 30px;">
+      <h2 class="section-title">Extension Capabilities</h2>
+      <p class="section-desc">Engineered for defense contractors, enterprises, and security-conscious individuals.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; max-width: 750px; margin: 0 auto;">
+      <div class="feature-check-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Scan emails in Gmail & webmail for spear-phishing attempts</span>
+      </div>
+      <div class="feature-check-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Detect Cyrillic homoglyphs, Punycode tricks, and brand typosquatting</span>
+      </div>
+      <div class="feature-check-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Reveal deceptive anchor tags (where text does not match true destination URL)</span>
+      </div>
+      <div class="feature-check-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Instant 0-100% Risk Score with one-click full incident investigation</span>
+      </div>
+      <div class="feature-check-item">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>Automatic offline fallback heuristics when disconnected from network</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="brand-logo-icon" style="width: 28px; height: 28px; border-radius: 6px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <span style="font-weight: 600; color: #fff;">Scam Detective</span>
+        <span>&bull; &copy; 2026 All Rights Reserved</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/extension">Chrome Extension</a>
+        <a href="/scan">AI Scanner</a>
+        <a href="/how-it-works">How It Works</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
