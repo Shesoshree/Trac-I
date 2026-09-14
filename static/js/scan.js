@@ -1039,7 +1039,11 @@ function resetSandboxModal() {
 }
 
 // Render an in-modal error state for the sandbox preview area.
+// Guarded by sbModalActive() so a late error response (after the user already
+// closed the modal mid-flight) cannot repopulate a closed modal — mirroring
+// the success-path guard on applySandboxPreview.
 function renderSandboxError(iframe, targetUrl, detail) {
+  if (!sbModalActive()) return;
   if (iframe) {
     iframe.srcdoc = `
       <!DOCTYPE html>
