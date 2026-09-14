@@ -192,3 +192,15 @@ python scripts/train_models.py
 - **Client DOM Sandboxing**: Attacker HTML is rendered inside `<iframe sandbox="">` with strict CSP; no attacker scripts, styles, or redirects execute in the analyst's browser session.
 - **Input Hardening**: Maximum size enforcement (500KB EML, 2048 chars URL, 50KB text) with structured Pydantic validation.
 - **Sliding-Window Rate Limiting**: Protects compute-heavy endpoints against denial-of-service.
+
+---
+## Team Members
+
+| Team Member         | Role      |
+| ------------------- | --------- |
+| *Anushree Sharma*   | Developer |
+| *Shreyash*          | Presenter |
+| *Aarna Verma*       | Designer  |
+| *Aditya Pratap*     | Tester    |
+
+*Team Name:* Noclu3
