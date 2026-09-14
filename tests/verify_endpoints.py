@@ -1,6 +1,10 @@
 """Verify all live API endpoints and web pages."""
 import json
+import sys
 import urllib.request
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 def test_endpoint(url, data=None):
     headers = {'Content-Type': 'application/json'}
@@ -49,9 +53,22 @@ def main():
     req = urllib.request.Request('http://127.0.0.1:8000/api/download/extension')
     with urllib.request.urlopen(req) as resp:
         zip_bytes = resp.read()
-        print(f"API /api/download/extension: HTTP {resp.status} ({len(zip_bytes)} bytes)")
+    # 8. Test Model Metrics API
+    status, m_res = test_endpoint('http://127.0.0.1:8000/api/model/metrics')
+    m_data = json.loads(m_res)
+    print(f"API /api/model/metrics: HTTP {status} -> Features: {m_data.get('features_count')}, Acc: {m_data.get('accuracy')}")
 
-    print("\nALL 7 LIVE SYSTEM VERIFICATION CHECKS PASSED!")
+    # 9. Test Scan History API
+    status, h_res = test_endpoint('http://127.0.0.1:8000/api/history')
+    h_data = json.loads(h_res)
+    print(f"API /api/history: HTTP {status} -> Recorded Scans: {len(h_data)}")
+
+    # 10. Test Incident Export API
+    status, exp_res = test_endpoint('http://127.0.0.1:8000/api/export/incident/apt_hr_policy_update')
+    exp_data = json.loads(exp_res)
+    print(f"API /api/export/incident: HTTP {status} -> Incident ID: {exp_data.get('incident_id')}")
+
+    print("\nALL 10 LIVE SYSTEM VERIFICATION CHECKS PASSED!")
 
 if __name__ == '__main__':
     main()

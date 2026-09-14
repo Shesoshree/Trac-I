@@ -1,5 +1,10 @@
 """Comprehensive test suite for Trac-I Phishing Detection Platform."""
+import os
+import sys
 import unittest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from engine.features import (
     HeaderFeatureExtractor,
     UrlFeatureExtractor,
@@ -112,8 +117,9 @@ Please verify your credentials.
         """Verify safe sandbox preview generation."""
         preview = SandboxAnalyzer.generate_sandbox_preview("https://login-micrоsoft365-verify.com/login")
         self.assertFalse(preview["is_safe"])
-        self.assertIn("passwd", preview["harvested_fields"])
+        self.assertIn("sandboxed_html", preview)
         self.assertIn("Let's Encrypt", preview["ssl_issuer"])
+        self.assertIn("Content-Security-Policy", preview["sandboxed_html"])
 
 
 if __name__ == "__main__":

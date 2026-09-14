@@ -20,6 +20,8 @@ from urllib.parse import parse_qs, urlparse
 from bs4 import BeautifulSoup
 
 from engine.disposable import DisposableEmailChecker, DISPOSABLE_DOMAINS
+from engine.domain_lookup import DomainAgeLookup
+from engine.nlp_model import NlpSentimentClassifier
 HIGH_VALUE_TARGETS = [
     "microsoft",
     "office365",
@@ -292,6 +294,14 @@ class HeaderFeatureExtractor:
             risk_score += 35.0
             flags.append(f"Disposable / Burner Email Service Detected ('{disposable_found_domain}'): Sender utilizes anonymous throwaway inbox")
 
+        # Check domain age of sender from_domain
+        from_domain_age = DomainAgeLookup.lookup_domain_age(from_domain) if from_domain else {}
+        fully_authenticated = (spf_status == "pass" and (dkim_status == "pass" or dmarc_status == "pass"))
+        if not fully_authenticated:
+            if from_domain_age.get("is_newly_registered") or from_domain_age.get("is_young_domain"):
+                risk_score += from_domain_age.get("risk_score", 0.0)
+                flags.extend(from_domain_age.get("risk_reasons", []))
+
         risk_score = min(100.0, risk_score)
 
         return {
@@ -327,6 +337,7 @@ class HeaderFeatureExtractor:
                 "originating_ip": originating_ip,
                 "chain": relay_chain,
             },
+            "from_domain_age": from_domain_age,
             "header_risk_score": round(risk_score, 1),
             "header_flags": flags,
         }
@@ -486,6 +497,12 @@ class UrlFeatureExtractor:
             risk += 15.0
             reasons.append(f"Non-standard HTTP port ({port})")
 
+        # 8. Real Domain Age & Registration Intel
+        age_info = DomainAgeLookup.lookup_domain_age(hostname)
+        if age_info.get("is_newly_registered") or age_info.get("is_young_domain"):
+            risk += age_info.get("risk_score", 0.0)
+            reasons.extend(age_info.get("risk_reasons", []))
+
         risk = min(100.0, risk)
 
         return {
@@ -510,6 +527,13 @@ class UrlFeatureExtractor:
             "subdomain_depth": subdomain_depth,
             "url_length": url_length,
             "digit_ratio": digit_ratio,
+            "domain_age_days": age_info.get("age_days"),
+            "domain_creation_date": age_info.get("creation_date"),
+            "domain_registrar": age_info.get("registrar"),
+            "is_newly_registered": age_info.get("is_newly_registered", False),
+            "is_young_domain": age_info.get("is_young_domain", False),
+            "domain_lookup_status": age_info.get("lookup_status", "unknown"),
+            "domain_age_risk": age_info.get("risk_score", 0.0),
             "risk_score": round(risk, 1),
             "risk_reasons": reasons,
         }
@@ -524,6 +548,9 @@ class UrlFeatureExtractor:
         has_homoglyphs = any(len(u["homoglyphs_detected"]) > 0 or u["is_punycode"] for u in detailed_urls)
         has_typosquat = any(u["typosquat_target"] is not None for u in detailed_urls)
         has_ip = any(u["is_ip_address"] for u in detailed_urls)
+        any_newly_reg = any(u.get("is_newly_registered", False) for u in detailed_urls)
+        min_domain_age = min((u["domain_age_days"] for u in detailed_urls if u.get("domain_age_days") is not None), default=9999)
+        max_domain_risk = max((u.get("domain_age_risk", 0.0) for u in detailed_urls), default=0.0)
 
         return {
             "urls": detailed_urls,
@@ -533,6 +560,9 @@ class UrlFeatureExtractor:
             "any_homoglyph": has_homoglyphs,
             "any_typosquat": has_typosquat,
             "any_ip_host": has_ip,
+            "any_newly_registered": any_newly_reg,
+            "min_domain_age_days": min_domain_age,
+            "max_domain_risk": max_domain_risk,
         }
 
 
@@ -722,56 +752,7 @@ class NlpBodyExtractor:
     @classmethod
     def analyze_text_nlp(cls, text: str) -> Dict[str, Any]:
         """Analyze text for emotional sentiment, urgency, and psychological coercion."""
-        text_lower = text.lower()
-        matched_triggers: Dict[str, List[Dict[str, Any]]] = {}
-        total_matches = 0
-
-        for category, patterns in cls.TRIGGERS.items():
-            matched_triggers[category] = []
-            for pattern in patterns:
-                for match in re.finditer(pattern, text_lower, re.IGNORECASE):
-                    matched_triggers[category].append({
-                        "phrase": match.group(0),
-                        "start": match.start(),
-                        "end": match.end(),
-                    })
-                    total_matches += 1
-
-        urgency_count = len(matched_triggers["urgency"])
-        fear_count = len(matched_triggers["fear_consequence"])
-        authority_count = len(matched_triggers["authority_pretext"])
-        credential_count = len(matched_triggers["credential_harvesting"])
-        bec_count = len(matched_triggers["bec_financial"])
-
-        # Urgency/NLP threat score calculation (0 to 100)
-        nlp_score = 0.0
-        if urgency_count > 0:
-            nlp_score += min(35.0, urgency_count * 15.0)
-        if fear_count > 0:
-            nlp_score += min(35.0, fear_count * 20.0)
-        if credential_count > 0:
-            nlp_score += min(40.0, credential_count * 25.0)
-        if authority_count > 0 and (urgency_count > 0 or credential_count > 0):
-            nlp_score += 20.0
-        if bec_count > 0:
-            nlp_score += 30.0
-
-        nlp_score = min(100.0, nlp_score)
-
-        return {
-            "matched_triggers": matched_triggers,
-            "counts": {
-                "urgency": urgency_count,
-                "fear": fear_count,
-                "authority": authority_count,
-                "credential": credential_count,
-                "bec": bec_count,
-            },
-            "total_coercive_triggers": total_matches,
-            "nlp_threat_score": round(nlp_score, 1),
-            "has_credential_solicitation": credential_count > 0,
-            "has_high_urgency": urgency_count >= 2 or (urgency_count >= 1 and fear_count >= 1),
-        }
+        return NlpSentimentClassifier.analyze_text(text)
 
 
 def extract_all_features_from_email(raw_eml_content: str) -> Dict[str, Any]:

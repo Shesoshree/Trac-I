@@ -1,0 +1,88 @@
+{
+  "model_version": "2.5.0-production",
+  "dataset_sample_count": 437,
+  "features_count": 29,
+  "test_split_size": 88,
+  "accuracy": 1.0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1_score": 1.0,
+  "roc_auc": 1.0,
+  "confusion_matrix": [
+    [
+      40,
+      0
+    ],
+    [
+      0,
+      48
+    ]
+  ],
+  "cross_validation": {
+    "n_folds": 5,
+    "rf_accuracy": 0.9931,
+    "rf_f1": 0.9936,
+    "rf_roc_auc": 0.9998,
+    "rf_accuracy_std": 0.0056,
+    "gb_accuracy": 1.0,
+    "gb_f1": 1.0,
+    "gb_roc_auc": 1.0
+  },
+  "top_features": [
+    {
+      "feature": "f29_nlp_ml_probability",
+      "title": "NLP ML Phishing Intent Classification Probability",
+      "importance": 0.1538
+    },
+    {
+      "feature": "f26_nlp_threat_score",
+      "title": "NLP Psychological Threat Score",
+      "importance": 0.1355
+    },
+    {
+      "feature": "f04_return_path_mismatch",
+      "title": "Return-Path Sender Domain Discrepancy",
+      "importance": 0.1313
+    },
+    {
+      "feature": "f24_header_risk_score",
+      "title": "Aggregated Email Header Risk Score",
+      "importance": 0.1264
+    },
+    {
+      "feature": "f07_relay_hop_count",
+      "title": "High-Latency External Relay Hops",
+      "importance": 0.1063
+    },
+    {
+      "feature": "f01_spf_fail",
+      "title": "SPF Authentication Failure",
+      "importance": 0.0836
+    },
+    {
+      "feature": "f02_dkim_fail",
+      "title": "DKIM Signature Missing or Failed",
+      "importance": 0.0671
+    },
+    {
+      "feature": "f06_display_name_spoof",
+      "title": "Display Name Brand/Executive Spoofing",
+      "importance": 0.0606
+    },
+    {
+      "feature": "f03_dmarc_fail",
+      "title": "DMARC Policy Rejection / Alignment Failure",
+      "importance": 0.0395
+    },
+    {
+      "feature": "f05_reply_to_mismatch",
+      "title": "Deceptive Reply-To Drop-Box Routing",
+      "importance": 0.0202
+    }
+  ],
+  "ensemble_weights": {
+    "random_forest": 0.55,
+    "gradient_boosting": 0.45
+  },
+  "training_notes": "Metrics derived from real labeled data with borderline cases. CV scores represent expected production generalization."
+}

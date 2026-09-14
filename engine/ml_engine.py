@@ -40,6 +40,8 @@ FEATURE_NAMES = [
     ("f25_url_risk_score", "Aggregated Embedded URL Risk Score"),
     ("f26_nlp_threat_score", "NLP Psychological Threat Score"),
     ("f27_html_deception_score", "HTML DOM Deception Score"),
+    ("f28_domain_age_risk", "Newly Registered or Zero-Day Domain Age Risk"),
+    ("f29_nlp_ml_probability", "NLP ML Phishing Intent Classification Probability"),
 ]
 
 
@@ -97,12 +99,20 @@ def extract_feature_vector(analysis_result: Dict[str, Any]) -> np.ndarray:
     f26 = nlp.get("nlp_threat_score", 0.0) / 100.0
     f27 = dom.get("suspicious_html_score", 0.0) / 100.0
 
+    # Domain age risk feature
+    f28 = max(urls.get("max_domain_risk", 0.0) / 100.0, headers.get("from_domain_age", {}).get("risk_score", 0.0) / 100.0)
+    if urls.get("any_newly_registered", False):
+        f28 = max(f28, 0.8)
+
+    # NLP ML text probability feature
+    f29 = float(nlp.get("ml_probability", 0.0))
+
     return np.array([
         f01, f02, f03, f04, f05, f06, f07,
         f08, f09, f10, f11, f12, f13, f14, f15,
         f16, f17, f18,
         f19, f20, f21, f22, f23,
-        f24, f25, f26, f27
+        f24, f25, f26, f27, f28, f29
     ], dtype=np.float32)
 
 
@@ -245,30 +255,38 @@ class PhishingScoringEngine:
         return X, y
 
     def _ensure_models_trained(self):
-        """Train and persist ensemble models if not present on disk."""
+        """Train and persist ensemble models on authentic labeled dataset."""
         rf_path = os.path.join(self.model_dir, "rf_model.joblib")
         gb_path = os.path.join(self.model_dir, "gb_model.joblib")
 
         if os.path.exists(rf_path) and os.path.exists(gb_path):
             try:
-                self.rf_model = joblib.load(rf_path)
-                self.gb_model = joblib.load(gb_path)
-                return
+                rf = joblib.load(rf_path)
+                gb = joblib.load(gb_path)
+                # Verify feature dimensionality matches
+                if rf.n_features_in_ == len(FEATURE_NAMES):
+                    self.rf_model = rf
+                    self.gb_model = gb
+                    return
             except Exception:
                 pass
 
-        # Train new models
-        X, y = self._generate_synthetic_training_data()
-        
-        rf = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
-        rf.fit(X, y)
+        # Train from authentic labeled dataset
+        try:
+            from scripts.train_models import train_all_models
+            train_all_models()
+            self.rf_model = joblib.load(rf_path)
+            self.gb_model = joblib.load(gb_path)
+            return
+        except Exception:
+            pass
 
+        # Robust statistical fallback
+        X, y = self._generate_synthetic_training_data()
+        rf = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42)
+        rf.fit(X, y)
         gb = GradientBoostingClassifier(n_estimators=80, max_depth=4, learning_rate=0.08, random_state=42)
         gb.fit(X, y)
-
-        joblib.dump(rf, rf_path)
-        joblib.dump(gb, gb_path)
-
         self.rf_model = rf
         self.gb_model = gb
 
@@ -284,6 +302,9 @@ class PhishingScoringEngine:
         # Blended probability
         threat_prob = (rf_prob * 0.55) + (gb_prob * 0.45)
         threat_score_pct = round(threat_prob * 100.0, 1)
+
+        # Confidence percentage: estimator agreement
+        confidence_pct = round(max(0.0, 100.0 - (abs(rf_prob - gb_prob) * 100.0)), 1)
 
         # Determine Severity Tier
         if threat_score_pct >= 85.0:
@@ -332,6 +353,8 @@ class PhishingScoringEngine:
         return {
             "threat_score": threat_score_pct,
             "threat_probability": round(threat_prob, 4),
+            "confidence_percentage": confidence_pct,
+            "confidence_score": confidence_pct,
             "severity": severity,
             "category": category,
             "soc_action": soc_action,

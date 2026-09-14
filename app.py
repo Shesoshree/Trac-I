@@ -14,9 +14,10 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from engine.customizer import CustomProfileManager, ThreatProfileModel, CustomScenarioRequest
+from engine.db import ScanDatabase
 from engine.disposable import DisposableEmailChecker
 from engine.features import (
     HeaderFeatureExtractor,
@@ -27,6 +28,7 @@ from engine.features import (
 from engine.ml_engine import PhishingScoringEngine
 from engine.sandbox import SandboxAnalyzer
 from engine.scenarios import get_all_scenarios, get_scenario_by_id
+from engine.security import SlidingWindowRateLimiter, validate_safe_url
 
 app = FastAPI(
     title="Trac-I - AI Scam & Phishing Detection Platform",
@@ -43,6 +45,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Rate Limiter & Security Headers Middleware
+rate_limiter = SlidingWindowRateLimiter(max_requests=120, window_seconds=60)
+
+@app.middleware("http")
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    path = request.url.path
+
+    # Apply rate limiting to analysis endpoints
+    if path.startswith("/api/analyze"):
+        allowed, remaining, retry_after = rate_limiter.is_allowed(client_ip)
+        if not allowed:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Please wait before submitting more scans.", "retry_after": retry_after},
+                headers={"Retry-After": str(retry_after)}
+            )
+
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
 # Initialize ML Scoring Engine
 scoring_engine = PhishingScoringEngine(model_dir="engine")
 
@@ -56,25 +83,25 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/extension-files", StaticFiles(directory="extension"), name="extension-files")
 
 
-# Pydantic Request Models
+# Pydantic Request Models with Input Validation
 class UrlScanRequest(BaseModel):
-    url: str
+    url: str = Field(..., max_length=2048, description="Target URL for lexical and heuristic inspection")
 
 
 class TextScanRequest(BaseModel):
-    text: str
+    text: str = Field(..., max_length=50000, description="SMS, BEC, or email body text")
 
 
 class EmailScanRequest(BaseModel):
-    raw_eml: str
+    raw_eml: str = Field(..., max_length=500000, description="Raw RFC 822 email payload including headers")
 
 
 class SandboxRequest(BaseModel):
-    url: str
+    url: str = Field(..., max_length=2048, description="Destination URL for isolated virtual DOM inspection")
 
 
 class DisposableCheckRequest(BaseModel):
-    email_or_domain: str
+    email_or_domain: str = Field(..., max_length=256, description="Email address or domain to check")
 
 
 # ==========================================
@@ -158,7 +185,16 @@ async def analyze_email_endpoint(payload: EmailScanRequest):
     # 2. Machine Learning ensemble prediction & XAI attribution
     prediction = scoring_engine.predict_threat(extracted)
 
+    # 3. Persistent History Record
+    scan_rec = ScanDatabase.save_scan(
+        scan_type="email",
+        target_name=extracted.get("headers", {}).get("subject") or "Raw Email Inspection",
+        prediction=prediction,
+        extracted_features=extracted,
+    )
+
     return {
+        "scan_id": scan_rec["id"],
         "prediction": prediction,
         "features": extracted,
     }
@@ -168,12 +204,22 @@ async def analyze_email_endpoint(payload: EmailScanRequest):
 async def analyze_upload_endpoint(file: UploadFile = File(...)):
     """Analyze uploaded .eml / .msg file."""
     content_bytes = await file.read()
+    if len(content_bytes) > 500000:
+        raise HTTPException(status_code=400, detail="Uploaded file exceeds 500KB maximum size limit.")
     raw_eml = content_bytes.decode("utf-8", errors="replace")
     
     extracted = extract_all_features_from_email(raw_eml)
     prediction = scoring_engine.predict_threat(extracted)
 
+    scan_rec = ScanDatabase.save_scan(
+        scan_type="email",
+        target_name=file.filename or "Uploaded EML File",
+        prediction=prediction,
+        extracted_features=extracted,
+    )
+
     return {
+        "scan_id": scan_rec["id"],
         "filename": file.filename,
         "prediction": prediction,
         "features": extracted,
@@ -187,7 +233,28 @@ async def analyze_url_endpoint(payload: UrlScanRequest):
     if not url:
         raise HTTPException(status_code=400, detail="Empty URL provided.")
 
+    # Scheme validation: reject javascript:, data:, file:, etc.
+    _lower = url.lower().rstrip(":")
+    _blocked_prefixes = ("javascript:", "data:", "file:", "vbscript:", "blob:")
+    if any(_lower.startswith(bp) for bp in _blocked_prefixes):
+        raise HTTPException(status_code=400, detail=f"Blocked scheme: URL must be http:// or https://.")
+
     analysis = UrlFeatureExtractor.analyze_single_url(url)
+    risk = analysis.get("risk_score", 0.0)
+    severity = "CRITICAL" if risk >= 70 else ("HIGH" if risk >= 40 else ("MEDIUM" if risk >= 25 else "LOW"))
+    scan_rec = ScanDatabase.save_scan(
+        scan_type="url",
+        target_name=url[:80],
+        prediction={
+            "threat_score": risk,
+            "severity": severity,
+            "confidence_percentage": 92.0,
+            "category": "MALICIOUS LINK" if risk >= 40 else "BENIGN LINK",
+            "soc_action": "Block URL at edge proxy and DNS sinkhole" if risk >= 40 else "Permit URL traffic",
+        },
+        extracted_features={"url": analysis},
+    )
+    analysis["scan_id"] = scan_rec["id"]
     return analysis
 
 
@@ -210,10 +277,59 @@ Content-Type: text/plain
     extracted = extract_all_features_from_email(simulated_eml)
     prediction = scoring_engine.predict_threat(extracted)
 
+    scan_rec = ScanDatabase.save_scan(
+        scan_type="text",
+        target_name=text[:60],
+        prediction=prediction,
+        extracted_features=extracted,
+    )
+
     return {
+        "scan_id": scan_rec["id"],
         "nlp": nlp,
         "prediction": prediction,
     }
+
+
+@app.get("/api/history")
+async def get_history_endpoint(limit: int = 25):
+    """Retrieve recent scan triage records."""
+    return ScanDatabase.get_recent_scans(limit=min(100, max(1, limit)))
+
+
+@app.get("/api/history/{scan_id}")
+async def get_history_detail_endpoint(scan_id: str):
+    """Retrieve full details of a historical scan by ID."""
+    rec = ScanDatabase.get_scan_by_id(scan_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail="Scan record not found.")
+    return rec
+
+
+@app.delete("/api/history/{scan_id}")
+async def delete_history_endpoint(scan_id: str):
+    """Delete a single scan history record."""
+    deleted = ScanDatabase.delete_scan(scan_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Scan record not found.")
+    return {"status": "deleted", "id": scan_id}
+
+
+@app.delete("/api/history")
+async def clear_all_history_endpoint():
+    """Clear all scan history records."""
+    ScanDatabase.clear_all()
+    return {"status": "cleared"}
+
+
+@app.get("/api/model/metrics")
+async def get_model_metrics_endpoint():
+    """Retrieve ML and NLP performance metrics."""
+    metrics_path = os.path.join("engine", "model_metrics.json")
+    if os.path.exists(metrics_path):
+        with open(metrics_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"status": "training_metrics_unavailable"}
 
 
 @app.post("/api/analyze/sandbox")

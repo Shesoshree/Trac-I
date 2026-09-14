@@ -1,0 +1,36 @@
+# =====================================================================
+# TRAC-I: AI Phishing Intelligence & Threat Detection Platform
+# Pinned Dependencies
+# =====================================================================
+
+# Core Web Framework & ASGI Server
+fastapi==0.141.1
+uvicorn==0.52.4
+starlette==1.6.0
+httpx==0.28.1
+pydantic==2.13.5
+pydantic_core==2.46.5
+python-multipart==0.0.32
+anyio==4.15.1
+h11==0.16.0
+
+# Machine Learning, NLP & Numerical Computation
+scikit-learn==1.9.1
+numpy==2.4.6
+scipy==1.17.1
+joblib==1.6.0
+threadpoolctl==3.6.0
+
+# HTML, Parsing & Template Engines
+beautifulsoup4==4.15.0
+soupsieve==2.9.2
+Jinja2==3.1.6
+MarkupSafe==3.0.3
+lxml==6.1.3
+idna==3.19
+
+# Presentation & Reporting Generation
+python-pptx==1.0.2
+pillow==12.3.0
+xlsxwriter==3.2.9
+typing_extensions==4.16.0

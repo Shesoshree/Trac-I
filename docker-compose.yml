@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  trac-i:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: trac-i-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENVIRONMENT=production
+      - MAX_REQUESTS_PER_MINUTE=30
+      - SQLITE_DB_PATH=/app/data/scan_history.db
+      - DOMAIN_CACHE_DB_PATH=/app/data/domain_cache.db
+    volumes:
+      - trac-i-data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  trac-i-data:
+    driver: local

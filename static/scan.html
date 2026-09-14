@@ -265,7 +265,7 @@
         <span class="brand-name-text">Trac-I</span>
       </a>
 
-      <nav class="nav-links">
+      <nav class="nav-links" aria-label="Main navigation">
         <a class="nav-item" href="/">Home</a>
         <a class="nav-item" href="/how-it-works">How It Works</a>
         <a class="nav-item" href="/extension">Extension</a>
@@ -275,11 +275,11 @@
       </nav>
 
       <div class="nav-actions">
-        <button id="themeToggle" class="theme-btn" title="Toggle Light/Dark Theme">
-          <svg id="sunIcon" style="display:none;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+        <button id="themeToggle" class="theme-btn" title="Toggle Light/Dark Theme" role="switch" aria-checked="false">
+          <svg id="sunIcon" style="display:none;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path>
           </svg>
-          <svg id="moonIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+          <svg id="moonIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
           </svg>
         </button>
@@ -312,26 +312,26 @@
       </div>
 
       <!-- Scenarios Bar -->
-      <div class="scenario-pills" id="scenarioPills">
+      <div class="scenario-pills" id="scenarioPills" role="radiogroup" aria-label="Phishing attack scenarios">
         <!-- Loaded dynamically via JS -->
       </div>
     </div>
   </section>
 
   <!-- Main Triage Console Grid -->
-  <main class="triage-grid">
+  <main class="triage-grid" aria-label="Phishing triage console">
     <!-- Left Column: Input Workbench -->
     <div style="display: flex; flex-direction: column; gap: 20px;">
       <div class="triage-card">
-        <div class="tabs-nav">
-          <button class="tab-btn active" data-tab="emailTab">Raw Email (.EML)</button>
-          <button class="tab-btn" data-tab="urlTab">URL Deep Dive</button>
-          <button class="tab-btn" data-tab="textTab">Text / BEC Lure</button>
+        <div class="tabs-nav" role="tablist" aria-label="Analysis input modes">
+          <button class="tab-btn active" data-tab="emailTab" role="tab" id="tab-emailTab" aria-selected="true" aria-controls="emailTab" tabindex="0">Raw Email (.EML)</button>
+          <button class="tab-btn" data-tab="urlTab" role="tab" id="tab-urlTab" aria-selected="false" aria-controls="urlTab" tabindex="-1">URL Deep Dive</button>
+          <button class="tab-btn" data-tab="textTab" role="tab" id="tab-textTab" aria-selected="false" aria-controls="textTab" tabindex="-1">Text / BEC Lure</button>
         </div>
 
         <!-- Tab 1: Raw Email -->
-        <div id="emailTab" class="tab-content">
-          <textarea id="rawEmlInput" class="code-input" placeholder="Paste full raw email with RFC 822 headers or choose a scenario above..."></textarea>
+        <div id="emailTab" class="tab-content" role="tabpanel" aria-labelledby="tab-emailTab" tabindex="0">
+          <textarea id="rawEmlInput" class="code-input" placeholder="Paste full raw email with RFC 822 headers or choose a scenario above..." aria-label="Raw email input"></textarea>
           
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
             <label class="btn btn-outline btn-sm" style="cursor: pointer;">
@@ -347,11 +347,11 @@
         </div>
 
         <!-- Tab 2: Quick URL -->
-        <div id="urlTab" class="tab-content" style="display: none;">
+        <div id="urlTab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="tab-urlTab" aria-hidden="true">
           <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">
             Inspect any suspicious URL for IDN homoglyphs, brand typosquatting, entropy, and zero-day redirectors.
           </p>
-          <input type="text" id="singleUrlInput" placeholder="e.g. https://login-micrоsoft365-verify.com" 
+          <input type="text" id="singleUrlInput" placeholder="e.g. https://login-micrоsoft365-verify.com" aria-label="Suspicious URL to inspect"
                  style="width:100%; padding:10px 12px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius-sm); color:#fff; font-size:13px; outline:none; margin-bottom:12px;" />
           <button id="analyzeUrlBtn" class="btn btn-accent" style="width: 100%;">
             Inspect Link Heuristics
@@ -359,8 +359,8 @@
         </div>
 
         <!-- Tab 3: Text / BEC -->
-        <div id="textTab" class="tab-content" style="display: none;">
-          <textarea id="rawTextInput" class="code-input" style="height: 200px;" placeholder="Paste SMS, BEC wire transfer request, or suspicious text message..."></textarea>
+        <div id="textTab" class="tab-content" style="display: none;" role="tabpanel" aria-labelledby="tab-textTab" aria-hidden="true">
+          <textarea id="rawTextInput" class="code-input" style="height: 200px;" placeholder="Paste SMS, BEC wire transfer request, or suspicious text message..." aria-label="Text or BEC lure content"></textarea>
           <button id="analyzeTextBtn" class="btn btn-accent" style="width: 100%; margin-top: 12px;">
             Analyze Urgency & BEC Triggers
           </button>
@@ -380,15 +380,17 @@
     <div style="display: flex; flex-direction: column; gap: 20px;">
       <!-- Threat Dial Card -->
       <div class="threat-dial-card">
-        <div class="dial-circle" id="dialCircle" style="border: 5px solid #ff1a35; color: #ff1a35;">
+        <div class="dial-circle" id="dialCircle" style="border: 5px solid #ff1a35; color: #ff1a35;"
+             role="meter" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Threat probability score">
           <span class="dial-number" id="dialScore">--%</span>
           <span class="dial-sub">THREAT PROB</span>
         </div>
 
         <div style="flex: 1;">
-          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-            <span id="severityBadge" class="status-badge danger">AWAITING SCAN</span>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+            <span id="severityBadge" class="status-badge danger" aria-live="polite">AWAITING SCAN</span>
             <span id="modelConfidence" style="font-size: 12px; color: #a3a3a3; font-family: monospace;">RF: --% | GBM: --%</span>
+            <span id="confidencePercentage" style="font-size: 11px; background: rgba(255, 26, 53, 0.2); color: #ff1a35; border: 1px solid rgba(255, 26, 53, 0.4); padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 700;">CONFIDENCE: --%</span>
           </div>
           <h2 id="categoryTitle" style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 4px;">
             Ready to Inspect
@@ -403,7 +405,7 @@
       <div class="triage-card">
         <h3 style="font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: space-between;">
           <span>1. Header Authentication & Sender Alignment</span>
-          <span id="headerRiskBadge" style="font-size: 11px; color: #a3a3a3; font-family: monospace;">Risk: --</span>
+          <span id="headerRiskBadge" style="font-size: 11px; color: #a3a3a3; font-family: monospace;" aria-live="polite">Risk: --</span>
         </h3>
 
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
@@ -432,7 +434,7 @@
           <h3 style="font-size: 16px; font-weight: 700; color: #ffffff;">
             2. Lexical URL & Homoglyph Intelligence
           </h3>
-          <span id="urlCountBadge" style="font-size: 12px; color: #ff1a35; font-family: monospace;">0 URLs Found</span>
+          <span id="urlCountBadge" style="font-size: 12px; color: #ff1a35; font-family: monospace;" aria-live="polite">0 URLs Found</span>
         </div>
 
         <div id="urlIntelligenceList" style="display: flex; flex-direction: column; gap: 10px;">
@@ -469,15 +471,39 @@
     </div>
   </main>
 
+  <!-- SOC Incident Triage Scan History Section -->
+  <section style="max-width: 1400px; margin: 0 auto 30px; padding: 0 20px;">
+    <div class="triage-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+            <span>Persistent SOC Triage Audit History</span>
+            <span id="historyCountBadge" style="font-size: 11px; background: rgba(255,26,53,0.2); color: #ff1a35; border: 1px solid rgba(255,26,53,0.4); padding: 2px 8px; border-radius: 4px; font-family: monospace;" aria-live="polite">0 Scans</span>
+          </h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+            SQLite-backed audit trail of all classified email threats, homoglyphs, and BEC lures with full IOC telemetry.
+          </p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="refreshHistoryBtn" class="btn btn-outline btn-sm" title="Reload audit history" aria-label="Refresh audit history"><span aria-hidden="true">&#8635;</span> Refresh</button>
+          <button id="clearHistoryBtn" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: rgba(239,68,68,0.4);" title="Clear audit history" aria-label="Clear all scan audit history (destructive action)">Clear History</button>
+        </div>
+      </div>
+      <div id="historyTableContainer" style="overflow-x: auto; margin-top: 12px;">
+        <p style="font-size: 13px; color: var(--text-muted); text-align: center; padding: 20px;">No scan history recorded yet. Analyze an email or link above.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Safe Sandbox Link Preview Modal -->
-  <div class="modal-overlay" id="sandboxModal">
+  <div class="modal-overlay" id="sandboxModal" role="dialog" aria-modal="true" aria-labelledby="sandboxModalTitle" aria-hidden="true" tabindex="-1">
     <div class="sandbox-modal">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff1a35;"></div>
-          <span style="font-weight: 700; color: #fff; font-size: 14px;">Automated Virtual Sandbox Preview</span>
+          <span id="sandboxModalTitle" style="font-weight: 700; color: #fff; font-size: 14px;">Automated Virtual Sandbox Preview</span>
         </div>
-        <button id="closeSandboxBtn" class="btn btn-outline btn-sm">&times; Close</button>
+        <button id="closeSandboxBtn" class="btn btn-outline btn-sm" aria-label="Close sandbox preview dialog">&times; Close</button>
       </div>
 
       <div style="padding: 20px;">
@@ -486,42 +512,42 @@
         </div>
 
         <!-- Telemetry Details -->
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 12px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 12px; margin-bottom: 20px;">
           <div style="background: #000000; padding: 10px; border-radius: 6px; border: 1px solid #262626;">
             <span style="color: #a3a3a3; display: block;">Target Destination:</span>
-            <strong id="sbUrl" style="font-family: monospace; color: #ff1a35;">--</strong>
+            <strong id="sbUrl" style="font-family: monospace; color: #ff1a35; word-break: break-all;">--</strong>
           </div>
           <div style="background: #000000; padding: 10px; border-radius: 6px; border: 1px solid #262626;">
-            <span style="color: #a3a3a3; display: block;">Certificate Authority:</span>
+            <span style="color: #a3a3a3; display: block;">Domain Registration Age:</span>
+            <strong id="sbDomainAge" style="color: #ffffff;">--</strong>
+          </div>
+          <div style="background: #000000; padding: 10px; border-radius: 6px; border: 1px solid #262626;">
+            <span style="color: #a3a3a3; display: block;">Certificate Authority (TLS):</span>
             <strong id="sbSsl" style="color: #ffffff;">--</strong>
           </div>
           <div style="background: #000000; padding: 10px; border-radius: 6px; border: 1px solid #262626;">
-            <span style="color: #a3a3a3; display: block;">Host Geolocation & ASN:</span>
-            <strong id="sbGeo" style="color: #ffffff;">--</strong>
-          </div>
-          <div style="background: #000000; padding: 10px; border-radius: 6px; border: 1px solid #262626;">
-            <span style="color: #a3a3a3; display: block;">Harvesting Endpoint (POST Target):</span>
-            <strong id="sbFormAction" style="font-family: monospace; color: #ff4d66;">--</strong>
+            <span style="color: #a3a3a3; display: block;">Harvesting Target (Form Action):</span>
+            <strong id="sbFormAction" style="font-family: monospace; color: #ff4d66; word-break: break-all;">--</strong>
           </div>
         </div>
 
-        <!-- Simulated Rendered View -->
-        <div style="border: 1px solid #262626; border-radius: 8px; overflow: hidden; background: #050505; color: #ffffff; min-height: 250px; padding: 20px;" id="sbRenderContainer">
-          <!-- Rendered DOM injected via JS -->
+        <!-- Sandboxed Iframe Container (Strictly Isolated, No Scripts Allowed) -->
+        <div style="border: 1px solid #262626; border-radius: 8px; overflow: hidden; background: #020617; min-height: 420px;" id="sbRenderWrapper">
+          <iframe id="sandboxIframe" sandbox="" referrerpolicy="no-referrer" title="Sandboxed Virtual DOM Preview" style="width: 100%; height: 420px; border: none; background: #020617; display: block;"></iframe>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Incident Ticket Export Modal -->
-  <div class="modal-overlay" id="ticketModal">
+  <div class="modal-overlay" id="ticketModal" role="dialog" aria-modal="true" aria-labelledby="ticketModalTitle" aria-hidden="true" tabindex="-1">
     <div class="sandbox-modal" style="max-width: 700px;">
       <div class="modal-header">
-        <span style="font-weight: 700; color: #fff;">Defense Contractor SOC Incident Ticket</span>
-        <button id="closeTicketBtn" class="btn btn-outline btn-sm">&times; Close</button>
+        <span id="ticketModalTitle" style="font-weight: 700; color: #fff;">Defense Contractor SOC Incident Ticket</span>
+        <button id="closeTicketBtn" class="btn btn-outline btn-sm" aria-label="Close incident ticket dialog">&times; Close</button>
       </div>
       <div style="padding: 20px;">
-        <textarea id="ticketMarkdownText" style="width: 100%; height: 350px; background: #000000; border: 1px solid #262626; border-radius: 6px; color: #ffffff; font-family: monospace; font-size: 12px; padding: 12px; line-height: 1.4; outline: none;"></textarea>
+        <textarea id="ticketMarkdownText" style="width: 100%; height: 350px; background: #000000; border: 1px solid #262626; border-radius: 6px; color: #ffffff; font-family: monospace; font-size: 12px; padding: 12px; line-height: 1.4; outline: none;" aria-label="SOC incident ticket markdown"></textarea>
         
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
           <button id="copyTicketBtn" class="btn btn-accent">Copy Markdown</button>
@@ -551,5 +577,6 @@
 
   <script src="/static/js/main.js"></script>
   <script src="/static/js/scan.js"></script>
+  <div class="sr-only" aria-live="polite" id="analysisStatus" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;"></div>
 </body>
 </html>

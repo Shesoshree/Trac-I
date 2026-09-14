@@ -27,3 +27,5 @@ Thumbs.db
 # Misc
 .lock
 downloads/
+data/*.db
+artifacts/*.zip
