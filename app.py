@@ -417,7 +417,7 @@ async def export_incident_endpoint(scenario_id: str):
 **Severity Level**: {pred.get('severity')} ({pred.get('threat_score')}% Threat Probability)
 **Threat Vector**: {pred.get('category')}
 **Date/Time**: 2026-09-14 13:20:00 UTC
-**Investigating System**: Trac-I Defense AI Engine v1.0
+**Investigating System**: Trac-I Defense AI Engine v1.0.0
 
 ---
 

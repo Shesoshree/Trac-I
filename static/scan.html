@@ -320,7 +320,7 @@
         </div>
 
         <div id="modelBadge" style="font-size: 12px; font-family: monospace; color: #ffffff; background: #000000; padding: 6px 12px; border-radius: 6px; border: 1px solid #ff1a35;" title="Model version reported by engine/model_metrics.json">
-          MODEL: RF+GBM ENSEMBLE (v1.0)
+          MODEL: RF+GBM ENSEMBLE (v1.0.0)
         </div>
       </div>
 
@@ -344,6 +344,10 @@
 
         <!-- Tab 1: Raw Email -->
         <div id="emailTab" class="tab-content" role="tabpanel" aria-labelledby="tab-emailTab" tabindex="0">
+          <div class="raw-email-help" style="font-size: 12px; color: var(--text-muted); background: rgba(14, 116, 144, 0.10); border: 1px solid rgba(34, 211, 238, 0.35); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; line-height: 1.6;">
+            <strong style="color: #7dd3fc;">How to get the raw email source:</strong>
+            Gmail — open the message &rsaquo; three-dot menu &rsaquo; <em>Show original</em> &rsaquo; copy the entire window below the header block. Outlook — open the message &rsaquo; <em>View source</em> (Web: three-dot menu &rsaquo; View &rsaquo; View message source). Paste it below.
+          </div>
           <textarea id="rawEmlInput" class="code-input" placeholder="Paste full raw email with RFC 822 headers or choose a scenario above..." aria-label="Raw email input"></textarea>
           
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 10px;">
