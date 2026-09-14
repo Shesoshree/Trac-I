@@ -1,6 +1,8 @@
 // Trac-I Phishing Triage Console Logic
 let currentScenarioId = "apt_hr_policy_update";
+let activeExportScenarioId = null;
 let currentAnalysisData = null;
+let currentRenderFn = null;
 
 // Escape attacker-controlled text before injecting into innerHTML (DOM XSS guard).
 function escapeHtml(value) {
@@ -21,12 +23,174 @@ function announce(message) {
   }
 }
 
+// Enable/disable the top-level Export SOC Ticket button based on a loaded scenario.
+function updateExportButtonState() {
+  const exportBtn = document.getElementById("exportTicketTopBtn");
+  if (!exportBtn) return;
+  const hasScenario = !!activeExportScenarioId;
+  exportBtn.disabled = !hasScenario;
+  exportBtn.title = hasScenario
+    ? `Export SOC incident ticket for scenario ${activeExportScenarioId}`
+    : "Select a defense scenario to enable ticket export.";
+}
+
+// Enable/disable per-tab submit buttons based on actual input presence.
+function updateButtonStates() {
+  const raw = document.getElementById("rawEmlInput")?.value.trim() || "";
+  const url = document.getElementById("singleUrlInput")?.value.trim() || "";
+  const text = document.getElementById("rawTextInput")?.value.trim() || "";
+
+  const emailBtn = document.getElementById("analyzeEmailBtn");
+  const urlBtn = document.getElementById("analyzeUrlBtn");
+  const textBtn = document.getElementById("analyzeTextBtn");
+
+  if (emailBtn && emailBtn.getAttribute("aria-busy") !== "true") emailBtn.disabled = !raw;
+  if (urlBtn && urlBtn.getAttribute("aria-busy") !== "true") urlBtn.disabled = !url;
+  if (textBtn && textBtn.getAttribute("aria-busy") !== "true") textBtn.disabled = !text;
+}
+
+// Toast notification system (persistent container exists in scan.html).
+function showToast(message, type = "info", duration = 4000) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.setAttribute("role", type === "error" ? "alert" : "status");
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("toast-visible"));
+  setTimeout(() => {
+    toast.classList.remove("toast-visible");
+    setTimeout(() => toast.remove(), 350);
+  }, duration);
+  announce(message);
+}
+
+// Extract a human-readable error from a failed response body (FastAPI detailed errors).
+async function getErrorMessage(resp, fallback) {
+  try {
+    const contentType = resp.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await resp.json();
+      if (data && typeof data === "object" && data.detail) return String(data.detail);
+    }
+  } catch (err) { /* ignore unparseable body */ }
+  return fallback;
+}
+
+// Toggle in-flight loading states across the verdict gauge and result panels.
+function setAnalysisLoading(loading) {
+  const dialCircle = document.getElementById("dialCircle");
+  const dialScore = document.getElementById("dialScore");
+  if (dialCircle && loading) dialCircle.classList.add("gauge-loading");
+  if (dialCircle && !loading) dialCircle.classList.remove("gauge-loading");
+
+  const score = loading ? "…" : "--%";
+  if (dialScore) dialScore.textContent = score;
+
+  const severityBadge = document.getElementById("severityBadge");
+  const categoryTitle = document.getElementById("categoryTitle");
+  const socActionText = document.getElementById("socActionText");
+  const modelConfidence = document.getElementById("modelConfidence");
+  const confidenceBadge = document.getElementById("confidencePercentage");
+
+  if (loading) {
+    const bg = "rgba(14, 116, 144, 0.25)";
+    const accent = "#22d3ee";
+    if (severityBadge) {
+      severityBadge.textContent = "SCANNING…";
+      severityBadge.style.background = bg;
+      severityBadge.style.color = accent;
+      severityBadge.style.border = "1px solid rgba(34, 211, 238, 0.5)";
+    }
+    if (categoryTitle) categoryTitle.textContent = "Running AI Pipeline…";
+    if (socActionText) socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> Awaiting ensemble verdict…`;
+    if (modelConfidence) modelConfidence.textContent = "RF: —% | GBM: —%";
+    if (confidenceBadge) {
+      confidenceBadge.textContent = "CONFIDENCE: …%";
+      confidenceBadge.style.background = bg;
+      confidenceBadge.style.color = accent;
+      confidenceBadge.style.border = "1px solid rgba(34, 211, 238, 0.5)";
+    }
+    announce("Analysis in progress");
+  } else {
+    // Restore idle defaults — also returns failed/aborted analyses to neutral.
+    const bg = "rgba(100, 116, 139, 0.12)";
+    if (severityBadge) {
+      severityBadge.textContent = "AWAITING SCAN";
+      severityBadge.style.background = bg;
+      severityBadge.style.color = "var(--text-muted)";
+      severityBadge.style.border = "1px solid var(--border-color)";
+    }
+    if (categoryTitle) categoryTitle.textContent = "Ready to Inspect";
+    if (socActionText) socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> Awaiting verdict…`;
+    if (modelConfidence) modelConfidence.textContent = "RF: --% | GBM: --%";
+    if (confidenceBadge) {
+      confidenceBadge.textContent = "CONFIDENCE: --%";
+      confidenceBadge.style.background = bg;
+      confidenceBadge.style.color = "var(--text-muted)";
+      confidenceBadge.style.border = "1px solid var(--border-color)";
+    }
+    updateButtonStates();
+  }
+}
+
+// Reset verdict + all result panels to a neutral idle state (e.g. when switching tabs)
+// so results from a previous tab never linger.
+function resetResultPanels() {
+  setAnalysisLoading(false);
+
+  const headerList = document.getElementById("headerMismatchesList");
+  if (headerList) {
+    headerList.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>Awaiting email headers…</p>";
+  }
+  const spf = document.getElementById("spfStatusBadge");
+  const dkim = document.getElementById("dkimStatusBadge");
+  const dmarc = document.getElementById("dmarcStatusBadge");
+  if (spf) { spf.textContent = "—"; spf.style.color = "var(--text-muted)"; }
+  if (dkim) { dkim.textContent = "—"; dkim.style.color = "var(--text-muted)"; }
+  if (dmarc) { dmarc.textContent = "—"; dmarc.style.color = "var(--text-muted)"; }
+  const riskBadge = document.getElementById("headerRiskBadge");
+  if (riskBadge) { riskBadge.textContent = "Risk Score: --/100"; riskBadge.style.color = "var(--text-muted)"; }
+
+  const countBadge = document.getElementById("urlCountBadge");
+  const urlList = document.getElementById("urlIntelligenceList");
+  if (countBadge) { countBadge.textContent = "0 URL(s) Detected"; countBadge.style.color = "var(--text-muted)"; }
+  if (urlList) urlList.innerHTML = "<p style='font-size:13px; color:var(--text-muted);'>Run an analysis to populate URL intelligence.</p>";
+
+  const nlpBar = document.getElementById("nlpSummaryBar");
+  const bodySnippet = document.getElementById("nlpBodySnippet");
+  if (nlpBar) nlpBar.innerHTML = "";
+  if (bodySnippet) bodySnippet.innerHTML = "<span style='color:var(--text-muted);'>Paste email or text content to preview matched trigger phrases…</span>";
+
+  const xaiList = document.getElementById("xaiAttributionList");
+  if (xaiList) xaiList.innerHTML = "<p style='font-size:13px; color:var(--text-muted);'>No elevated risk contributions flagged.</p>";
+}
+
+// Populate the header model badge from GET /api/model/metrics (falls back to the static string).
+async function loadModelBadge() {
+  const badge = document.getElementById("modelBadge");
+  if (!badge) return;
+  try {
+    const resp = await fetch("/api/model/metrics");
+    if (!resp.ok) return;
+    const metrics = await resp.json();
+    const version = metrics.model_version || metrics.version;
+    if (version) {
+      badge.textContent = `MODEL: RF+GBM ENSEMBLE (v${String(version).replace(/^v/i, "")})`;
+    }
+  } catch (err) { /* keep static fallback when the API is unavailable */ }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   initTabs();
   initModals();
   await loadScenarios();
   setupEventListeners();
   loadScanHistory();
+  loadModelBadge();
+  updateButtonStates();
+  updateExportButtonState();
 });
 
 // Tab Navigation
@@ -53,6 +217,8 @@ function initTabs() {
         targetContent.style.display = "block";
         targetContent.setAttribute("aria-hidden", "false");
       }
+      updateButtonStates();
+      resetResultPanels();
     });
 
     // Keyboard arrow navigation between tabs (roving tabindex)
@@ -125,6 +291,8 @@ async function loadScenarios() {
 
 function selectCustomScenario(rawEml, title, pillElement) {
   currentScenarioId = "custom_dynamic";
+  activeExportScenarioId = null;
+  updateExportButtonState();
 
   if (pillElement) {
     document.querySelectorAll(".scenario-pill").forEach(p => {
@@ -152,6 +320,8 @@ function selectCustomScenario(rawEml, title, pillElement) {
 
 async function selectScenario(scenarioId, pillElement) {
   currentScenarioId = scenarioId;
+  activeExportScenarioId = scenarioId;
+  updateExportButtonState();
 
   // Update pills UI
   if (pillElement) {
@@ -193,11 +363,27 @@ function setupEventListeners() {
     analyzeEmailBtn.addEventListener("click", () => {
       const raw = document.getElementById("rawEmlInput").value.trim();
       if (!raw) {
-        alert("Please paste raw email headers & body or pick a scenario above.");
+        showToast("Please paste raw email headers & body or pick a scenario above.", "error");
         return;
       }
       runEmailAnalysis(raw);
     });
+  }
+
+  const emailInput = document.getElementById("rawEmlInput");
+  if (emailInput) {
+    emailInput.addEventListener("input", updateButtonStates);
+    emailInput.addEventListener("change", updateButtonStates);
+  }
+  const urlInput = document.getElementById("singleUrlInput");
+  if (urlInput) {
+    urlInput.addEventListener("input", updateButtonStates);
+    urlInput.addEventListener("change", updateButtonStates);
+  }
+  const textInput = document.getElementById("rawTextInput");
+  if (textInput) {
+    textInput.addEventListener("input", updateButtonStates);
+    textInput.addEventListener("change", updateButtonStates);
   }
 
   // URL Deep Dive button
@@ -206,10 +392,13 @@ function setupEventListeners() {
     analyzeUrlBtn.addEventListener("click", async () => {
       const url = document.getElementById("singleUrlInput").value.trim();
       if (!url) return;
+      activeExportScenarioId = null;
+      updateExportButtonState();
       analyzeUrlBtn.disabled = true;
       analyzeUrlBtn.setAttribute("aria-busy", "true");
       analyzeUrlBtn.textContent = "Analyzing...";
       announce("Inspecting URL heuristics");
+      setAnalysisLoading(true);
 
       try {
         const resp = await fetch("/api/analyze/url", {
@@ -217,13 +406,23 @@ function setupEventListeners() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url })
         });
+        if (!resp.ok) {
+          const msg = await getErrorMessage(resp, `URL inspection failed (HTTP ${resp.status}).`);
+          showToast(msg, "error", 6000);
+          announce("URL inspection failed");
+          return;
+        }
         const data = await resp.json();
+        currentAnalysisData = data;
+        currentRenderFn = () => renderUrlDeepDiveResults(currentAnalysisData);
         renderUrlDeepDiveResults(data);
         loadScanHistory();
         announce(`URL analysis complete. Risk score ${data.risk_score} percent`);
       } catch (e) {
-        alert("URL inspection failed.");
+        showToast(`URL inspection failed: ${e && e.message ? e.message : "network error"}`, "error", 6000);
+        console.error(e);
       } finally {
+        setAnalysisLoading(false);
         analyzeUrlBtn.disabled = false;
         analyzeUrlBtn.removeAttribute("aria-busy");
         analyzeUrlBtn.textContent = "Inspect Link Heuristics";
@@ -237,10 +436,13 @@ function setupEventListeners() {
     analyzeTextBtn.addEventListener("click", async () => {
       const text = document.getElementById("rawTextInput").value.trim();
       if (!text) return;
+      activeExportScenarioId = null;
+      updateExportButtonState();
       analyzeTextBtn.disabled = true;
       analyzeTextBtn.setAttribute("aria-busy", "true");
       analyzeTextBtn.textContent = "Analyzing...";
       announce("Analyzing urgency and BEC triggers");
+      setAnalysisLoading(true);
 
       try {
         const resp = await fetch("/api/analyze/text", {
@@ -248,33 +450,89 @@ function setupEventListeners() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text })
         });
+        if (!resp.ok) {
+          const msg = await getErrorMessage(resp, `Text analysis failed (HTTP ${resp.status}).`);
+          showToast(msg, "error", 6000);
+          announce("Text analysis failed");
+          return;
+        }
         const data = await resp.json();
+        currentAnalysisData = data;
+        currentRenderFn = () => renderTextAnalysisResults(currentAnalysisData, text);
         renderTextAnalysisResults(data, text);
         loadScanHistory();
       } catch (e) {
-        alert("Text analysis failed.");
+        showToast(`Text analysis failed: ${e && e.message ? e.message : "network error"}`, "error", 6000);
+        console.error(e);
       } finally {
+        setAnalysisLoading(false);
         analyzeTextBtn.disabled = false;
         analyzeTextBtn.removeAttribute("aria-busy");
         analyzeTextBtn.textContent = "Analyze Urgency & BEC Triggers";
+        updateButtonStates();
       }
     });
   }
 
-  // File Upload
+  // File Upload (multipart .eml/.msg) wired to POST /api/analyze/upload
   const fileInput = document.getElementById("emlFileInput");
   if (fileInput) {
-    fileInput.addEventListener("change", (e) => {
+    fileInput.addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target.result;
-        document.getElementById("rawEmlInput").value = content;
-        runEmailAnalysis(content);
-      };
-      reader.readAsText(file);
+      const MAX_FILE_SIZE = 500 * 1024;
+      if (file.size > MAX_FILE_SIZE) {
+        showToast(`Upload rejected: file exceeds the 500KB limit (${(file.size / 1024).toFixed(1)}KB).`, "error", 6000);
+        fileInput.value = "";
+        return;
+      }
+
+      activeExportScenarioId = null;
+      updateExportButtonState();
+
+      const btn = document.getElementById("analyzeEmailBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.setAttribute("aria-busy", "true");
+        btn.textContent = "Uploading & Analyzing...";
+      }
+      announce(`Analyzing uploaded file ${file.name}`);
+      setAnalysisLoading(true);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const resp = await fetch("/api/analyze/upload", {
+          method: "POST",
+          body: formData
+        });
+        if (!resp.ok) {
+          const msg = await getErrorMessage(resp, `Upload analysis failed (HTTP ${resp.status}).`);
+          showToast(msg, "error", 6000);
+          announce("Upload analysis failed");
+          return;
+        }
+        const data = await resp.json();
+        currentAnalysisData = data;
+        currentRenderFn = () => renderFullTriageReport(currentAnalysisData);
+        renderFullTriageReport(data);
+        loadScanHistory();
+        showToast(`Upload analyzed: ${data.filename || file.name}`, "success");
+        announce(`Upload analysis complete for ${data.filename || file.name}`);
+      } catch (err) {
+        showToast(`Upload failed: ${err && err.message ? err.message : "network error"}`, "error", 6000);
+        console.error(err);
+      } finally {
+        setAnalysisLoading(false);
+        if (btn) {
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+          btn.textContent = "Run AI Detection";
+        }
+        updateButtonStates();
+        fileInput.value = "";
+      }
     });
   }
 
@@ -282,7 +540,11 @@ function setupEventListeners() {
   const exportBtn = document.getElementById("exportTicketTopBtn");
   if (exportBtn) {
     exportBtn.addEventListener("click", () => {
-      openIncidentTicketModal(currentScenarioId);
+      if (!activeExportScenarioId) {
+        showToast("Select a defense scenario first to generate an incident ticket.", "info");
+        return;
+      }
+      openIncidentTicketModal(activeExportScenarioId);
     });
   }
 
@@ -297,10 +559,17 @@ function setupEventListeners() {
     clearBtn.addEventListener("click", async () => {
       if (!confirm("Are you sure you want to clear persistent SOC triage audit history?")) return;
       try {
-        await fetch("/api/history", { method: "DELETE" });
+        const resp = await fetch("/api/history", { method: "DELETE" });
+        if (!resp.ok) {
+          const msg = await getErrorMessage(resp, `Failed to clear history (HTTP ${resp.status}).`);
+          showToast(msg, "error", 6000);
+          return;
+        }
         loadScanHistory();
+        showToast("SOC triage audit history cleared.", "success");
       } catch (e) {
-        alert("Failed to clear history.");
+        showToast(`Failed to clear history: ${e && e.message ? e.message : "network error"}`, "error", 6000);
+        console.error(e);
       }
     });
   }
@@ -315,6 +584,7 @@ async function runEmailAnalysis(rawEml) {
     btn.textContent = "Executing AI Pipeline...";
   }
   announce("AI detection in progress");
+  setAnalysisLoading(true);
 
   try {
     const resp = await fetch("/api/analyze/email", {
@@ -323,17 +593,19 @@ async function runEmailAnalysis(rawEml) {
       body: JSON.stringify({ raw_eml: rawEml })
     });
 
-    if (!resp.ok) throw new Error("Analysis failed");
+    if (!resp.ok) throw new Error(await getErrorMessage(resp, `Analysis failed (HTTP ${resp.status}).`));
     const data = await resp.json();
     currentAnalysisData = data;
+    currentRenderFn = () => renderFullTriageReport(currentAnalysisData);
 
     renderFullTriageReport(data);
     loadScanHistory();
     announce(`Analysis complete. Threat probability ${Math.round((data.prediction?.probability ?? 0) * 100)} percent`);
   } catch (err) {
-    alert("Error executing detection engine. Ensure FastAPI server is running.");
+    showToast(`Error executing detection engine: ${err && err.message ? err.message : "ensure the FastAPI server is running."}`, "error", 7000);
     console.error(err);
   } finally {
+    setAnalysisLoading(false);
     if (btn) {
       btn.disabled = false;
       btn.removeAttribute("aria-busy");
@@ -367,11 +639,10 @@ function renderFullTriageReport(data) {
   const themeBgColor = isHighRisk ? "rgba(255, 26, 53, 0.2)" : (isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.08)");
 
   dialScore.textContent = `${score}%`;
-  const dialCircle = document.getElementById("dialCircle");
   if (dialCircle) dialCircle.setAttribute("aria-valuenow", String(Math.round(score)));
-  dialCircle.style.borderColor = themeAccentColor;
-  dialCircle.style.color = themeAccentColor;
-  dialCircle.style.boxShadow = isHighRisk ? "0 0 25px rgba(255, 26, 53, 0.4)" : (isDark ? "0 0 20px rgba(255, 255, 255, 0.2)" : "0 2px 10px rgba(0,0,0,0.08)");
+  if (dialCircle) dialCircle.style.borderColor = themeAccentColor;
+  if (dialCircle) dialCircle.style.color = themeAccentColor;
+  if (dialCircle) dialCircle.style.boxShadow = isHighRisk ? "0 0 25px rgba(255, 26, 53, 0.4)" : (isDark ? "0 0 20px rgba(255, 255, 255, 0.2)" : "0 2px 10px rgba(0,0,0,0.08)");
 
   severityBadge.textContent = pred.severity;
   severityBadge.style.background = themeBgColor;
@@ -724,12 +995,64 @@ function trapFocus(modalEl, e) {
   }
 }
 
+// Reset sandbox modal state fully (telemetry fields + iframe) on close.
+function resetSandboxModal() {
+  const sbUrl = document.getElementById("sbUrl");
+  const sbDomainAge = document.getElementById("sbDomainAge");
+  const sbSsl = document.getElementById("sbSsl");
+  const sbFormAction = document.getElementById("sbFormAction");
+  const iframe = document.getElementById("sandboxIframe");
+  if (sbUrl) sbUrl.textContent = "--";
+  if (sbDomainAge) sbDomainAge.textContent = "--";
+  if (sbSsl) sbSsl.textContent = "--";
+  if (sbFormAction) sbFormAction.textContent = "--";
+  if (iframe) iframe.srcdoc = "";
+}
+
+// Render an in-modal error state for the sandbox preview area.
+function renderSandboxError(iframe, targetUrl, detail) {
+  if (iframe) {
+    iframe.srcdoc = `
+      <!DOCTYPE html>
+      <html>
+      <body style="background:#020617;color:#ef4444;font-family:system-ui,sans-serif;padding:30px;">
+        <h4 style="margin-top:0;">Virtual Sandbox Inspection Failed</h4>
+        <p style="font-size:12px;color:#ef4444;">${escapeHtml(detail || "Unknown error.")}</p>
+        <p style="font-size:12px;color:#94a3b8;">Unable to crawl or render target: ${escapeHtml(targetUrl)}</p>
+      </body>
+      </html>
+    `;
+  }
+}
+
+// Re-apply a stored sandbox response to the modal (used for theme re-renders while it's open).
+function applySandboxPreview(data) {
+  const sbUrl = document.getElementById("sbUrl");
+  const sbDomainAge = document.getElementById("sbDomainAge");
+  const sbSsl = document.getElementById("sbSsl");
+  const sbFormAction = document.getElementById("sbFormAction");
+  const iframe = document.getElementById("sandboxIframe");
+  if (sbUrl) sbUrl.textContent = data.target_url || "--";
+  if (sbDomainAge) sbDomainAge.textContent = data.domain_age || "Unknown";
+  if (sbSsl) sbSsl.textContent = data.ssl_issuer || "No SSL";
+  if (sbFormAction) sbFormAction.textContent = data.form_action || "None detected";
+  if (iframe) iframe.srcdoc = data.sandboxed_html || "<p style='color:#fff;padding:20px;'>No rendered wireframe returned.</p>";
+}
+
+function sbModalActive() {
+  const m = document.getElementById("sandboxModal");
+  return !!(m && m.classList.contains("active"));
+}
+
 function initModals() {
   const sbModal = document.getElementById("sandboxModal");
   const closeSbBtn = document.getElementById("closeSandboxBtn");
   if (sbModal) sbModal.setAttribute("aria-hidden", "true");
   if (closeSbBtn) {
-    closeSbBtn.addEventListener("click", () => closeModal(sbModal, document.activeElement));
+    closeSbBtn.addEventListener("click", () => {
+      resetSandboxModal();
+      closeModal(sbModal, document.activeElement);
+    });
   }
 
   const ticketModal = document.getElementById("ticketModal");
@@ -758,7 +1081,7 @@ function initModals() {
       const blob = new Blob([text], { type: "text/markdown" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `SOC-TICKET-${currentScenarioId.toUpperCase()}.md`;
+      a.download = `SOC-TICKET-${(activeExportScenarioId || currentScenarioId).toUpperCase()}.md`;
       a.click();
     });
   }
@@ -768,6 +1091,7 @@ function initModals() {
     if (modalEl) {
       modalEl.addEventListener("click", (e) => {
         if (e.target === modalEl) {
+          if (modalEl === sbModal) resetSandboxModal();
           closeModal(modalEl, document.activeElement);
         }
       });
@@ -778,7 +1102,10 @@ function initModals() {
   // Escape key closes active modals
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      if (sbModal && sbModal.classList.contains("active")) closeModal(sbModal, document.activeElement);
+      if (sbModal && sbModal.classList.contains("active")) {
+        resetSandboxModal();
+        closeModal(sbModal, document.activeElement);
+      }
       if (ticketModal && ticketModal.classList.contains("active")) closeModal(ticketModal, document.activeElement);
     }
   });
@@ -819,28 +1146,22 @@ async function openSandboxModal(targetUrl) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: targetUrl })
     });
+    if (!resp.ok) {
+      const msg = await getErrorMessage(resp, `Sandbox inspection failed (HTTP ${resp.status}).`);
+      renderSandboxError(iframe, targetUrl, msg);
+      showToast(msg, "error", 6000);
+      return;
+    }
     const data = await resp.json();
-
-    if (sbUrl) sbUrl.textContent = data.target_url || targetUrl;
-    if (sbDomainAge) sbDomainAge.textContent = data.domain_age || "Unknown";
-    if (sbSsl) sbSsl.textContent = data.ssl_issuer || "No SSL";
-    if (sbFormAction) sbFormAction.textContent = data.form_action || "None detected";
-
-    if (iframe) {
-      iframe.srcdoc = data.sandboxed_html || "<p style='color:#fff;padding:20px;'>No rendered wireframe returned.</p>";
-    }
+    currentAnalysisData = data;
+    currentRenderFn = () => {
+      if (sbModalActive()) applySandboxPreview(currentAnalysisData);
+    };
+    applySandboxPreview(data);
   } catch (err) {
-    if (iframe) {
-      iframe.srcdoc = `
-        <!DOCTYPE html>
-        <html>
-        <body style="background:#020617;color:#ef4444;font-family:system-ui,sans-serif;padding:30px;">
-          <h4 style="margin-top:0;">Virtual Sandbox Inspection Failed</h4>
-          <p style="font-size:12px;color:#94a3b8;">Unable to crawl or render target: ${targetUrl}</p>
-        </body>
-        </html>
-      `;
-    }
+    renderSandboxError(iframe, targetUrl, err && err.message ? err.message : null);
+    showToast(`Sandbox inspection failed: ${err && err.message ? err.message : "network error"}`, "error", 6000);
+    console.error(err);
   }
 }
 
@@ -853,10 +1174,20 @@ async function openIncidentTicketModal(scenarioId) {
 
   try {
     const resp = await fetch(`/api/export/incident/${scenarioId}`);
+    if (!resp.ok) {
+      const msg = await getErrorMessage(resp, `Incident export failed (HTTP ${resp.status}).`);
+      textarea.value = `# Incident Export Failed\n\n${msg}`;
+      showToast(msg, "error", 6000);
+      announce("Incident export failed");
+      return;
+    }
     const data = await resp.json();
     textarea.value = data.markdown_ticket;
+    showToast("SOC incident ticket generated.", "success");
   } catch (err) {
     textarea.value = "Failed to export incident ticket.";
+    showToast(`Incident export failed: ${err && err.message ? err.message : "network error"}`, "error", 6000);
+    console.error(err);
   }
 }
 
@@ -896,7 +1227,7 @@ async function loadScanHistory() {
       const flagsDisplay = (item.summary || "None").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
       return `
-        <tr style="border-bottom: 1px solid var(--border-color); font-size: 12px;">
+        <tr class="history-row" role="button" tabindex="0" data-scan-id="${escapeHtml(item.id)}" aria-label="Load historical scan ${escapeHtml(item.id)}" style="border-bottom: 1px solid var(--border-color); font-size: 12px;">
           <td style="padding: 10px 12px; font-family: monospace; color: var(--text-muted); white-space: nowrap;">${timeStr}</td>
           <td style="padding: 10px 12px;">
             <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; background: var(--bg-input); padding: 2px 6px; border-radius: 3px; border: 1px solid var(--border-color); color: var(--text-main);">
@@ -939,6 +1270,17 @@ async function loadScanHistory() {
         </tbody>
       </table>
     `;
+
+    // Click (or keyboard-activate) a history row to reload its full detail into the panels.
+    container.querySelectorAll("tr[data-scan-id]").forEach(row => {
+      row.addEventListener("click", () => viewHistoryDetail(row.getAttribute("data-scan-id")));
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          viewHistoryDetail(row.getAttribute("data-scan-id"));
+        }
+      });
+    });
   } catch (err) {
     console.error("Error loading scan history:", err);
     container.innerHTML = `
@@ -949,10 +1291,90 @@ async function loadScanHistory() {
   }
 }
 
-// Re-render prediction elements on theme change
+// Fetch and re-render a single historical scan record into the result panels.
+async function viewHistoryDetail(scanId) {
+  try {
+    const resp = await fetch(`/api/history/${scanId}`);
+    if (!resp.ok) {
+      const msg = await getErrorMessage(resp, `Failed to load scan record (HTTP ${resp.status}).`);
+      showToast(msg, "error", 6000);
+      return;
+    }
+    const rec = await resp.json();
+
+    // Historical re-views are not scenario exports.
+    activeExportScenarioId = null;
+    updateExportButtonState();
+
+    renderHistoryEntry(rec);
+    announce(`Loaded historical ${rec.scan_type} scan ${rec.id} from audit log.`);
+  } catch (err) {
+    showToast(`Failed to load scan record: ${err && err.message ? err.message : "network error"}`, "error", 6000);
+    console.error(err);
+  }
+}
+
+// Rebuild the verdict + panels from a stored history record.
+// Server stores full feature extracts for email/text scans, and {"url": analysis} for URL scans.
+// XAI feature_contributions are NOT persisted, so that panel shows an honest placeholder.
+function renderHistoryEntry(rec) {
+  const features = rec.features || {};
+
+  if (rec.scan_type === "url") {
+    const urlAnalysis = features.url && typeof features.url === "object" ? features.url : features;
+    if (!urlAnalysis || typeof urlAnalysis.risk_score !== "number") {
+      setAnalysisLoading(false);
+      showToast("Historical URL scan detail is incomplete.", "info");
+      return;
+    }
+    renderUrlDeepDiveResults(urlAnalysis);
+
+    const dialScore = document.getElementById("dialScore");
+    if (dialScore) dialScore.textContent = `${rec.threat_score}%`;
+    const severityBadge = document.getElementById("severityBadge");
+    if (severityBadge) severityBadge.textContent = rec.severity;
+    const categoryTitle = document.getElementById("categoryTitle");
+    if (categoryTitle) categoryTitle.textContent = rec.category || categoryTitle.textContent;
+    const socActionText = document.getElementById("socActionText");
+    if (socActionText) socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> ${escapeHtml(rec.soc_action || "Review traffic")}`;
+    const confBadge = document.getElementById("confidencePercentage");
+    if (confBadge && rec.confidence_score !== undefined) {
+      confBadge.textContent = `CONFIDENCE: ${rec.confidence_score}%`;
+    }
+    const xaiList = document.getElementById("xaiAttributionList");
+    if (xaiList) xaiList.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>XAI contributions are not persisted for historical scans.</p>";
+    // URL history lacks email headers — can't re-render through the full-triage path on theme change.
+    currentAnalysisData = null;
+    currentRenderFn = null;
+    return;
+  }
+
+  // Email / Text history: rebuild the full triage payload from stored columns + feature extract.
+  const reconstructed = {
+    prediction: {
+      threat_score: rec.threat_score,
+      severity: rec.severity,
+      category: rec.category,
+      soc_action: rec.soc_action || "",
+      rf_confidence: rec.confidence_score,
+      gb_confidence: rec.confidence_score,
+      confidence_percentage: rec.confidence_score,
+      probability: (rec.threat_score || 0) / 100,
+      feature_contributions: null
+    },
+    features: features
+  };
+  currentAnalysisData = reconstructed;
+  currentRenderFn = () => renderFullTriageReport(currentAnalysisData);
+  renderFullTriageReport(reconstructed);
+  const xaiList = document.getElementById("xaiAttributionList");
+  if (xaiList) xaiList.innerHTML = "<p style='font-size:12px; color:var(--text-muted);'>XAI contributions are not persisted for historical scans.</p>";
+}
+
+// Re-render the last-scanned analysis on theme change (dispatches to the correct renderer).
 window.addEventListener("themechange", () => {
-  if (currentAnalysisData) {
-    renderFullTriageReport(currentAnalysisData);
+  if (currentRenderFn) {
+    currentRenderFn();
   }
 });
 

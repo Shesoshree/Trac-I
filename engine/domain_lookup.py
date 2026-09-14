@@ -177,7 +177,7 @@ class DomainAgeLookup:
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "Trac-I-Threat-Intelligence/2.4 (Defense SOC; RDAP Client)",
+                "User-Agent": "Trac-I-Threat-Intelligence/1.0 (Defense SOC; RDAP Client)",
                 "Accept": "application/rdap+json, application/json",
             }
         )

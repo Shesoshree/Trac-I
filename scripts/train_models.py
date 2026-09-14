@@ -279,7 +279,7 @@ def train_all_models():
     ]
 
     metrics_payload = {
-        "model_version": "2.5.0-production",
+        "model_version": "1.0.0",
         "dataset_sample_count": len(samples),
         "features_count": len(FEATURE_NAMES),
         "test_split_size": len(X_test),

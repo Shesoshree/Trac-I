@@ -33,7 +33,7 @@ from engine.security import SlidingWindowRateLimiter, validate_safe_url
 app = FastAPI(
     title="Trac-I - AI Scam & Phishing Detection Platform",
     description="Advanced AI detection engine for phishing emails, homoglyph URLs, and social engineering.",
-    version="2.4.0",
+    version="1.0.0",
 )
 
 # Enable CORS for Chrome Extension integration
@@ -417,7 +417,7 @@ async def export_incident_endpoint(scenario_id: str):
 **Severity Level**: {pred.get('severity')} ({pred.get('threat_score')}% Threat Probability)
 **Threat Vector**: {pred.get('category')}
 **Date/Time**: 2026-09-14 13:20:00 UTC
-**Investigating System**: Trac-I Defense AI Engine v2.4
+**Investigating System**: Trac-I Defense AI Engine v1.0
 
 ---
 

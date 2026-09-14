@@ -1,5 +1,5 @@
 {
-  "model_version": "2.5.0-production",
+  "model_version": "1.0.0",
   "dataset_sample_count": 437,
   "features_count": 29,
   "test_split_size": 88,
