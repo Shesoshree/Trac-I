@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trac-I Browser Extension - AI Phishing Defense for Chrome</title>
-  <meta name="description" content="Protect yourself from online scams in real-time with our powerful Chrome extension. Get instant scam detection as you browse the web. Compatible with Gmail.">
+  <link rel="icon" type="image/png" href="/static/favicon.png">
   <link rel="stylesheet" href="/static/css/style.css">
+  <script>
+    (function() {
+      var t = localStorage.getItem('trac_i_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <style>
     /* In-Browser Extension Simulator Styles (Strict Black, Red & White) */
     .simulator-container {
@@ -177,13 +183,8 @@
   <header class="navbar">
     <div class="nav-container">
       <a class="brand-link" href="/">
-        <div class="brand-logo-icon">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="m9 12 2 2 4-4"/>
-          </svg>
-        </div>
-        <span>Trac-I</span>
+        <img src="/static/img/trac-i-mark.png" alt="Trac-I Emblem" class="brand-logo-img">
+        <span class="brand-name-text">Trac-I</span>
       </a>
 
       <nav class="nav-links">
@@ -261,9 +262,7 @@
         
         <!-- Interactive Extension Icon -->
         <div class="browser-ext-icon" id="simExtIcon" title="Click to open simulated Trac-I Extension">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
+          <img src="/static/img/trac-i-mark.png" alt="Trac-I" style="width: 20px; height: 20px; border-radius: 4px;">
           <span class="badge-counter">1</span>
         </div>
       </div>
@@ -312,11 +311,7 @@
         <div class="sim-popup-col">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #262626; padding-bottom: 10px; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="brand-logo-icon" style="width: 26px; height: 26px; border-radius: 6px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ffffff" stroke-width="2.2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-              </div>
+              <img src="/static/img/trac-i-mark.png" alt="Trac-I" style="width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(255, 26, 53, 0.4);">
               <span style="font-size: 14px; font-weight: bold; color: #ffffff;">Trac-I</span>
             </div>
             <span style="font-size: 10px; background: rgba(255, 26, 53, 0.2); color: #ff1a35; border: 1px solid rgba(255, 26, 53, 0.4); padding: 2px 6px; border-radius: 4px; font-weight: 600;">ACTIVE</span>
@@ -472,12 +467,8 @@
   <footer class="footer">
     <div class="footer-container">
       <div style="display: flex; align-items: center; gap: 10px;">
-        <div class="brand-logo-icon" style="width: 28px; height: 28px; border-radius: 6px;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <span style="font-weight: 600; color: #fff;">Trac-I</span>
+        <img src="/static/img/trac-i-mark.png" alt="Trac-I Logo" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(255, 26, 53, 0.4);">
+        <span style="font-weight: 700; color: var(--text-main);">Trac-I</span>
         <span>&bull; &copy; 2026 All Rights Reserved</span>
       </div>
 

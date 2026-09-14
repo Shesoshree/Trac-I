@@ -269,22 +269,23 @@ function renderFullTriageReport(data) {
 
   const score = pred.threat_score;
   const isHighRisk = score >= 25;
-  const themeAccentColor = isHighRisk ? "#ff1a35" : "#ffffff";
-  const themeBgColor = isHighRisk ? "rgba(255, 26, 53, 0.2)" : "rgba(255, 255, 255, 0.1)";
+  const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+  const themeAccentColor = isHighRisk ? "#ff1a35" : (isDark ? "#ffffff" : "#0f172a");
+  const themeBgColor = isHighRisk ? "rgba(255, 26, 53, 0.2)" : (isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.08)");
 
   dialScore.textContent = `${score}%`;
   dialCircle.style.borderColor = themeAccentColor;
   dialCircle.style.color = themeAccentColor;
-  dialCircle.style.boxShadow = isHighRisk ? "0 0 25px rgba(255, 26, 53, 0.4)" : "0 0 20px rgba(255, 255, 255, 0.2)";
+  dialCircle.style.boxShadow = isHighRisk ? "0 0 25px rgba(255, 26, 53, 0.4)" : (isDark ? "0 0 20px rgba(255, 255, 255, 0.2)" : "0 2px 10px rgba(0,0,0,0.08)");
 
   severityBadge.textContent = pred.severity;
   severityBadge.style.background = themeBgColor;
   severityBadge.style.color = themeAccentColor;
-  severityBadge.style.border = `1px solid ${themeAccentColor}66`;
+  severityBadge.style.border = `1px solid ${isHighRisk ? '#ff1a3566' : 'var(--border-color)'}`;
 
   categoryTitle.textContent = pred.category;
-  categoryTitle.style.color = "#ffffff";
-  socActionText.innerHTML = `<strong style="color:#ffffff;">SOC Action:</strong> ${pred.soc_action}`;
+  categoryTitle.style.color = "var(--text-main)";
+  socActionText.innerHTML = `<strong style="color:var(--text-main);">SOC Action:</strong> ${pred.soc_action}`;
   modelConfidence.textContent = `RF: ${pred.rf_confidence}% | GBM: ${pred.gb_confidence}%`;
 
   // 2. Header Authentication Matrix
@@ -312,16 +313,16 @@ function renderHeaderMatrix(headers) {
   const dmarcStatus = headers.dmarc.status.toUpperCase();
 
   spfEl.textContent = spfStatus;
-  spfEl.style.color = spfStatus === "PASS" ? "#ffffff" : "#ff1a35";
+  spfEl.style.color = spfStatus === "PASS" ? "var(--text-main)" : "#ff1a35";
 
   dkimEl.textContent = dkimStatus;
-  dkimEl.style.color = dkimStatus === "PASS" ? "#ffffff" : "#ff1a35";
+  dkimEl.style.color = dkimStatus === "PASS" ? "var(--text-main)" : "#ff1a35";
 
   dmarcEl.textContent = dmarcStatus;
-  dmarcEl.style.color = dmarcStatus === "PASS" ? "#ffffff" : "#ff1a35";
+  dmarcEl.style.color = dmarcStatus === "PASS" ? "var(--text-main)" : "#ff1a35";
 
   riskBadge.textContent = `Risk Score: ${headers.header_risk_score}/100`;
-  riskBadge.style.color = headers.header_risk_score >= 30 ? "#ff1a35" : "#ffffff";
+  riskBadge.style.color = headers.header_risk_score >= 30 ? "#ff1a35" : "var(--text-main)";
 
   mismatchesList.innerHTML = "";
   if (headers.header_flags && headers.header_flags.length > 0) {
@@ -343,7 +344,7 @@ function renderUrlsList(urlData) {
   const countBadge = document.getElementById("urlCountBadge");
   const container = document.getElementById("urlIntelligenceList");
   countBadge.textContent = `${urlData.total_urls_found} URL(s) Detected`;
-  countBadge.style.color = urlData.total_urls_found > 0 ? "#ff1a35" : "#ffffff";
+  countBadge.style.color = urlData.total_urls_found > 0 ? "#ff1a35" : "var(--text-main)";
 
   container.innerHTML = "";
   if (!urlData.urls || urlData.urls.length === 0) {
@@ -374,13 +375,15 @@ function renderUrlsList(urlData) {
       ).join(" ");
     }
 
+    const isDark = document.documentElement.getAttribute("data-theme") !== "light";
+    const normalText = isDark ? "#ffffff" : "#0f172a";
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <div style="font-family:monospace; font-size:13px; font-weight:bold; color:${isThreat ? '#ff1a35' : '#ffffff'};">
+        <div style="font-family:monospace; font-size:13px; font-weight:bold; color:${isThreat ? '#ff1a35' : normalText};">
           ${u.url}
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
-          <span style="font-size:11px; font-weight:bold; background:${isThreat ? 'rgba(255,26,53,0.2)' : 'rgba(255,255,255,0.1)'}; color:${isThreat ? '#ff1a35' : '#ffffff'}; border:1px solid ${isThreat ? '#ff1a3566' : '#ffffff44'}; padding:3px 8px; border-radius:4px;">
+          <span style="font-size:11px; font-weight:bold; background:${isThreat ? 'rgba(255,26,53,0.2)' : 'var(--safe-bg)'}; color:${isThreat ? '#ff1a35' : normalText}; border:1px solid ${isThreat ? '#ff1a3566' : 'var(--border-color)'}; padding:3px 8px; border-radius:4px;">
             ${u.risk_score}% Risk
           </span>
           <button class="btn btn-outline btn-sm sandbox-btn" data-url="${encodeURIComponent(u.url)}">
@@ -390,14 +393,14 @@ function renderUrlsList(urlData) {
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; font-size:11.5px;">
-        <div><span style="color:var(--text-muted);">Punycode:</span> <strong style="color:#ffffff;">${u.is_punycode ? u.decoded_punycode : 'Standard ASCII'}</strong></div>
+        <div><span style="color:var(--text-muted);">Punycode:</span> <strong style="color:var(--text-main);">${u.is_punycode ? u.decoded_punycode : 'Standard ASCII'}</strong></div>
         <div><span style="color:var(--text-muted);">Homoglyphs:</span> <strong>${homoglyphDetail}</strong></div>
-        <div><span style="color:var(--text-muted);">Brand Target:</span> <strong style="color:${u.typosquat_target ? '#ff1a35' : '#ffffff'};">${u.typosquat_target || 'None'}</strong></div>
-        <div><span style="color:var(--text-muted);">Shannon Entropy:</span> <strong style="color:#ffffff;">${u.entropy_domain}</strong></div>
+        <div><span style="color:var(--text-muted);">Brand Target:</span> <strong style="color:${u.typosquat_target ? '#ff1a35' : 'var(--text-main)'};">${u.typosquat_target || 'None'}</strong></div>
+        <div><span style="color:var(--text-muted);">Shannon Entropy:</span> <strong style="color:var(--text-main);">${u.entropy_domain}</strong></div>
       </div>
 
       ${u.risk_reasons && u.risk_reasons.length > 0 ? `
-        <div style="font-size:11px; color:#ff4d66; border-top:1px dashed #222222; padding-top:6px;">
+        <div style="font-size:11px; color:#ff4d66; border-top:1px dashed var(--border-color); padding-top:6px;">
           <strong>Threat Flags:</strong> ${u.risk_reasons.join(" &bull; ")}
         </div>
       ` : ''}
@@ -423,19 +426,19 @@ function renderNlpHeatmap(nlp, dom, textSnippet) {
   summaryBar.innerHTML = `
     <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Urgency Triggers:</span>
-      <strong style="color:${counts.urgency > 0 ? '#ff1a35' : '#ffffff'};">${counts.urgency || 0}</strong>
+      <strong style="color:${counts.urgency > 0 ? '#ff1a35' : 'var(--text-main)'};">${counts.urgency || 0}</strong>
     </div>
     <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Fear / Disciplinary:</span>
-      <strong style="color:${counts.fear > 0 ? '#ff1a35' : '#ffffff'};">${counts.fear || 0}</strong>
+      <strong style="color:${counts.fear > 0 ? '#ff1a35' : 'var(--text-main)'};">${counts.fear || 0}</strong>
     </div>
     <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Credential Solicitation:</span>
-      <strong style="color:${counts.credential > 0 ? '#ff1a35' : '#ffffff'};">${counts.credential > 0 ? 'YES' : 'NONE'}</strong>
+      <strong style="color:${counts.credential > 0 ? '#ff1a35' : 'var(--text-main)'};">${counts.credential > 0 ? 'YES' : 'NONE'}</strong>
     </div>
     <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Anti-Spam Hidden Text:</span>
-      <strong style="color:${dom.hidden_elements_count > 0 ? '#ff1a35' : '#ffffff'};">${dom.hidden_elements_count || 0}</strong>
+      <strong style="color:${dom.hidden_elements_count > 0 ? '#ff1a35' : 'var(--text-main)'};">${dom.hidden_elements_count || 0}</strong>
     </div>
   `;
 
@@ -605,3 +608,10 @@ async function openIncidentTicketModal(scenarioId) {
     textarea.value = "Failed to export incident ticket.";
   }
 }
+
+// Re-render prediction elements on theme change
+window.addEventListener("themechange", () => {
+  if (currentAnalysisData) {
+    renderPrediction(currentAnalysisData);
+  }
+});
