@@ -1,4 +1,4 @@
-"""Comprehensive test suite for Scam Detective Phishing Detection Platform."""
+"""Comprehensive test suite for Trac-I Phishing Detection Platform."""
 import unittest
 from engine.features import (
     HeaderFeatureExtractor,

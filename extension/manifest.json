@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Scam Detective - AI Phishing & Scam Defense",
+  "name": "Trac-I - AI Phishing & Scam Defense",
   "version": "1.0.0",
   "description": "Real-time AI-powered scam and phishing detection. Inspects URLs, email headers, homoglyphs, and deceptive links.",
   "permissions": [
@@ -19,7 +19,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Scam Detective",
+    "default_title": "Trac-I",
     "default_icon": {
       "16": "icons/icon-16.png",
       "48": "icons/icon-48.png",

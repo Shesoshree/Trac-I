@@ -290,22 +290,22 @@ class PhishingScoringEngine:
             severity = "CRITICAL"
             category = "CRITICAL SPEAR-PHISHING / ZERO-DAY"
             soc_action = "IMMEDIATE BLOCK: Purge from all mailboxes, revoke user tokens, and isolate endpoint."
-            badge_color = "#dc2626"
+            badge_color = "#ff1a35"
         elif threat_score_pct >= 55.0:
             severity = "HIGH"
             category = "MALICIOUS PHISHING ATTACK"
             soc_action = "QUARANTINE & BLOCK: Blacklist sender domain and sinkhole embedded destination URLs."
-            badge_color = "#ea580c"
+            badge_color = "#ef4444"
         elif threat_score_pct >= 25.0:
             severity = "MEDIUM"
             category = "SUSPICIOUS / ELEVATED RISK"
             soc_action = "SECURITY TRIAGE: Route email to SOC review and enforce link protection sandbox."
-            badge_color = "#eab308"
+            badge_color = "#dc2626"
         else:
             severity = "LOW"
             category = "BENIGN / VERIFIED SAFE"
             soc_action = "ALLOW: Verified authenticated sender and legitimate enterprise content."
-            badge_color = "#16a34a"
+            badge_color = "#ffffff"
 
         # Compute Explainable AI (XAI) feature impact attribution
         rf_importances = self.rf_model.feature_importances_

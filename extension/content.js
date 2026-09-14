@@ -1,4 +1,4 @@
-// Scam Detective Content Script: Real-time link scanner for web pages & Gmail
+// Trac-I Content Script: Real-time link scanner for web pages & Gmail
 (function() {
   const HOMOGLYPHS = {
     '\u0430': 'a', '\u0441': 'c', '\u0435': 'e', '\u0456': 'i',
@@ -65,9 +65,9 @@
 
   function injectWarningBadge(aTag, reason) {
     const badge = document.createElement("span");
-    badge.className = "scam-detective-badge";
+    badge.className = "trac-i-badge";
     badge.innerHTML = `&#9888; <strong>Phish Alert</strong>`;
-    badge.title = `Scam Detective Warning:\n${reason}`;
+    badge.title = `Trac-I Warning:\n${reason}`;
     badge.style.cssText = `
       display: inline-flex;
       align-items: center;

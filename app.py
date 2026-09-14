@@ -1,4 +1,4 @@
-"""FastAPI Web Application & REST API Server for Scam Detective.
+"""FastAPI Web Application & REST API Server for Trac-I.
 
 Serves:
 1. Public Web Experience (Home, Extension Showcase, How It Works)
@@ -29,7 +29,7 @@ from engine.sandbox import SandboxAnalyzer
 from engine.scenarios import get_all_scenarios, get_scenario_by_id
 
 app = FastAPI(
-    title="Scam Detective - AI Scam & Phishing Detection Platform",
+    title="Trac-I - AI Scam & Phishing Detection Platform",
     description="Advanced AI detection engine for phishing emails, homoglyph URLs, and social engineering.",
     version="2.4.0",
 )
@@ -83,32 +83,32 @@ class DisposableCheckRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def home_page():
-    """Render Scam Detective Home Page."""
+    """Render Trac-I Home Page."""
     path = os.path.join("static", "index.html")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Scam Detective</h1><p><a href='/scan'>Go to Scanner</a></p>")
+    return HTMLResponse("<h1>Trac-I</h1><p><a href='/scan'>Go to Scanner</a></p>")
 
 
 @app.get("/extension", response_class=HTMLResponse)
 async def extension_page():
-    """Render Scam Detective Chrome Extension Page with Simulator."""
+    """Render Trac-I Chrome Extension Page with Simulator."""
     path = os.path.join("static", "extension.html")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Scam Detective Extension</h1>")
+    return HTMLResponse("<h1>Trac-I Extension</h1>")
 
 
 @app.get("/scan", response_class=HTMLResponse)
 async def scan_page():
-    """Render Scam Detective Interactive AI Scanner & Triage Console."""
+    """Render Trac-I Interactive AI Scanner & Triage Console."""
     path = os.path.join("static", "scan.html")
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse("<h1>Scam Detective Scanner</h1>")
+    return HTMLResponse("<h1>Trac-I Scanner</h1>")
 
 
 @app.get("/disposable", response_class=HTMLResponse)
@@ -301,7 +301,7 @@ async def export_incident_endpoint(scenario_id: str):
 **Severity Level**: {pred.get('severity')} ({pred.get('threat_score')}% Threat Probability)
 **Threat Vector**: {pred.get('category')}
 **Date/Time**: 2026-09-14 13:20:00 UTC
-**Investigating System**: Scam Detective Defense AI Engine v2.4
+**Investigating System**: Trac-I Defense AI Engine v2.4
 
 ---
 
@@ -361,7 +361,7 @@ async def export_incident_endpoint(scenario_id: str):
 @app.get("/api/download/extension")
 async def download_extension_endpoint():
     """Download the packaged Chrome Extension zip file."""
-    zip_path = os.path.join("static", "downloads", "scam-detective-extension.zip")
+    zip_path = os.path.join("static", "downloads", "trac-i-extension.zip")
     if not os.path.exists(zip_path):
         # Package on the fly if needed
         from scripts.package_extension import package_extension
@@ -370,5 +370,5 @@ async def download_extension_endpoint():
     return FileResponse(
         zip_path,
         media_type="application/zip",
-        filename="scam-detective-extension.zip",
+        filename="trac-i-extension.zip",
     )

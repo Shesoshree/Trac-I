@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Disposable Email Checker - Scam Detective Burner Domain Detector</title>
+  <title>Disposable Email Checker - Trac-I Burner Domain Detector</title>
   <meta name="description" content="Free AI-powered disposable email checker and burner domain detector. Identify throwaway inboxes, temporary mail providers, and prevent fake signups.">
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
@@ -37,8 +37,9 @@
     }
 
     .sample-tag:hover {
-      border-color: #0284c7;
-      color: #38bdf8;
+      border-color: #ff1a35;
+      color: #ff1a35;
+      background: rgba(255, 26, 53, 0.1);
     }
 
     .verdict-card {
@@ -62,7 +63,7 @@
             <path d="m9 12 2 2 4-4"/>
           </svg>
         </div>
-        <span>Scam Detective</span>
+        <span>Trac-I</span>
       </a>
 
       <nav class="nav-links">
@@ -135,47 +136,47 @@
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
           <div>
             <span id="dispBadge" class="status-badge danger">DISPOSABLE BURNER</span>
-            <h3 id="dispDomain" style="font-size: 20px; font-weight: 800; font-family: monospace; margin-top: 6px;">
+            <h3 id="dispDomain" style="font-size: 20px; font-weight: 800; font-family: monospace; margin-top: 6px; color: #ffffff;">
               mailinator.com
             </h3>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 11px; color: var(--text-muted);">FRAUD RISK SCORE</div>
-            <div id="dispRisk" style="font-size: 24px; font-weight: 900; color: #ef4444;">92%</div>
+            <div id="dispRisk" style="font-size: 24px; font-weight: 900; color: #ff1a35;">92%</div>
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 13px; margin-bottom: 16px;">
-          <div style="background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: 6px;">
+          <div style="background: #000000; border: 1px solid #222222; padding: 10px 12px; border-radius: 6px;">
             <span style="color: var(--text-muted); display: block; font-size: 11px;">CATEGORY:</span>
-            <strong id="dispCategory" style="color: #38bdf8;">DISPOSABLE_BURNER</strong>
+            <strong id="dispCategory" style="color: #ffffff;">DISPOSABLE_BURNER</strong>
           </div>
-          <div style="background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: 6px;">
+          <div style="background: #000000; border: 1px solid #222222; padding: 10px 12px; border-radius: 6px;">
             <span style="color: var(--text-muted); display: block; font-size: 11px;">TRUST LEVEL:</span>
-            <strong id="dispTrust">VERY LOW</strong>
+            <strong id="dispTrust" style="color: #ffffff;">VERY LOW</strong>
           </div>
-          <div style="background: rgba(0,0,0,0.2); padding: 10px 12px; border-radius: 6px;">
+          <div style="background: #000000; border: 1px solid #222222; padding: 10px 12px; border-radius: 6px;">
             <span style="color: var(--text-muted); display: block; font-size: 11px;">FREE PUBLIC WEBMAIL:</span>
-            <strong id="dispFree">NO</strong>
+            <strong id="dispFree" style="color: #ffffff;">NO</strong>
           </div>
         </div>
 
-        <div style="background: rgba(0,0,0,0.25); border-left: 4px solid #ef4444; padding: 12px 14px; border-radius: 4px; font-size: 13px;" id="dispAlertBox">
-          <strong id="dispRecTitle" style="color: #f87171;">RECOMMENDATION:</strong>
-          <p id="dispRecDesc" style="color: #cbd5e1; margin-top: 4px;"></p>
+        <div style="background: rgba(255, 26, 53, 0.1); border-left: 4px solid #ff1a35; padding: 12px 14px; border-radius: 4px; font-size: 13px;" id="dispAlertBox">
+          <strong id="dispRecTitle" style="color: #ff1a35;">RECOMMENDATION:</strong>
+          <p id="dispRecDesc" style="color: #ffffff; margin-top: 4px;"></p>
         </div>
       </div>
     </div>
 
     <!-- API Snippet -->
     <div style="max-width: 850px; margin: 40px auto 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 24px;">
-      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #38bdf8;">
+      <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #ff1a35;">
         Developer REST API Integration
       </h3>
       <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
         Integrate real-time disposable email verification into your SaaS signup or login flows:
       </p>
-      <pre style="background: var(--bg-input); padding: 14px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #a5f3fc; overflow-x: auto;">
+      <pre style="background: #000000; border: 1px solid #222222; padding: 14px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #ffffff; overflow-x: auto;">
 curl -X POST http://localhost:8000/api/check-disposable \
   -H "Content-Type: application/json" \
   -d '{"email_or_domain": "attacker@mailinator.com"}'</pre>
@@ -191,7 +192,7 @@ curl -X POST http://localhost:8000/api/check-disposable \
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
         </div>
-        <span style="font-weight: 600; color: #fff;">Scam Detective</span>
+        <span style="font-weight: 600; color: #fff;">Trac-I</span>
         <span>&bull; &copy; 2026 All Rights Reserved</span>
       </div>
 
@@ -251,23 +252,27 @@ curl -X POST http://localhost:8000/api/check-disposable \
         if (data.is_disposable) {
           badge.classList.add("danger");
           badge.textContent = "DISPOSABLE BURNER DETECTED";
-          alertBox.style.borderLeftColor = "#ef4444";
-          riskEl.style.color = "#ef4444";
+          alertBox.style.borderLeftColor = "#ff1a35";
+          alertBox.style.background = "rgba(255, 26, 53, 0.12)";
+          riskEl.style.color = "#ff1a35";
         } else if (data.is_gov_mil) {
           badge.classList.add("safe");
           badge.textContent = "GOVERNMENT / MILITARY VERIFIED";
-          alertBox.style.borderLeftColor = "#10b981";
-          riskEl.style.color = "#10b981";
+          alertBox.style.borderLeftColor = "#ffffff";
+          alertBox.style.background = "rgba(255, 255, 255, 0.08)";
+          riskEl.style.color = "#ffffff";
         } else if (data.is_free_webmail) {
           badge.classList.add("warning");
           badge.textContent = "CONSUMER PUBLIC WEBMAIL";
-          alertBox.style.borderLeftColor = "#f59e0b";
-          riskEl.style.color = "#f59e0b";
+          alertBox.style.borderLeftColor = "#ff4d66";
+          alertBox.style.background = "rgba(255, 77, 102, 0.12)";
+          riskEl.style.color = "#ff4d66";
         } else {
           badge.classList.add("safe");
           badge.textContent = "STANDARD CORPORATE DOMAIN";
-          alertBox.style.borderLeftColor = "#10b981";
-          riskEl.style.color = "#10b981";
+          alertBox.style.borderLeftColor = "#ffffff";
+          alertBox.style.background = "rgba(255, 255, 255, 0.08)";
+          riskEl.style.color = "#ffffff";
         }
       }
 

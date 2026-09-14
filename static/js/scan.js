@@ -1,4 +1,4 @@
-// Scam Detective Phishing Triage Console Logic
+// Trac-I Phishing Triage Console Logic
 let currentScenarioId = "apt_hr_policy_update";
 let currentAnalysisData = null;
 
@@ -44,8 +44,8 @@ async function loadScenarios() {
     if (customEml) {
       const customPill = document.createElement("button");
       customPill.className = `scenario-pill ${isCustomMode ? 'active' : ''}`;
-      customPill.style.border = '1px solid #38bdf8';
-      customPill.style.color = '#38bdf8';
+      customPill.style.border = '1px solid #ff1a35';
+      customPill.style.color = '#ff1a35';
       customPill.innerHTML = `&#9888; ${customTitle}`;
       customPill.addEventListener("click", () => {
         selectCustomScenario(customEml, customTitle, customPill);
@@ -61,19 +61,19 @@ async function loadScenarios() {
       container.appendChild(pill);
     });
 
-    // Automatically load either the custom scenario or the first preloaded scenario
     if (isCustomMode) {
-      selectCustomScenario(customEml, customTitle);
+      const customPillEl = container.querySelector(".scenario-pill");
+      if (customPillEl) selectCustomScenario(customEml, customTitle, customPillEl);
     } else if (scenarios.length > 0) {
-      await selectScenario(scenarios[0].id);
+      selectScenario(scenarios[0].id, container.querySelector(".scenario-pill"));
     }
   } catch (err) {
-    console.error("Failed to load scenarios:", err);
+    console.error("Error loading scenarios:", err);
   }
 }
 
-function selectCustomScenario(rawEml, title, pillElement = null) {
-  currentScenarioId = "custom_spear_phish";
+function selectCustomScenario(rawEml, title, pillElement) {
+  currentScenarioId = "custom_dynamic";
 
   if (pillElement) {
     document.querySelectorAll(".scenario-pill").forEach(p => p.classList.remove("active"));
@@ -87,16 +87,15 @@ function selectCustomScenario(rawEml, title, pillElement = null) {
   if (metaSummary) {
     metaSummary.innerHTML = `
       <strong>${title}</strong><br>
-      <span style="color:#38bdf8;">Origin:</span> Personalized Defense Threat Studio<br>
-      <span style="color:#cbd5e1;">Target Profile:</span> Cleared personnel targeted with customized homoglyphs, GCC High lure, or urgent compliance coercion.
+      <span style="color:#ff1a35;">Origin:</span> Personalized Defense Threat Studio<br>
+      <span style="color:#a3a3a3;">Summary:</span> Dynamic adversary lure generated to test organization defenses.
     `;
   }
 
-  // Auto trigger analysis
   runEmailAnalysis(rawEml);
 }
 
-async function selectScenario(scenarioId, pillElement = null) {
+async function selectScenario(scenarioId, pillElement) {
   currentScenarioId = scenarioId;
 
   // Update pills UI
@@ -116,8 +115,8 @@ async function selectScenario(scenarioId, pillElement = null) {
     if (metaSummary) {
       metaSummary.innerHTML = `
         <strong>${data.title}</strong><br>
-        <span style="color:#38bdf8;">Target:</span> ${data.target}<br>
-        <span style="color:#cbd5e1;">Summary:</span> ${data.summary}
+        <span style="color:#ff1a35;">Target:</span> ${data.target}<br>
+        <span style="color:#a3a3a3;">Summary:</span> ${data.summary}
       `;
     }
 
@@ -269,16 +268,23 @@ function renderFullTriageReport(data) {
   const modelConfidence = document.getElementById("modelConfidence");
 
   const score = pred.threat_score;
+  const isHighRisk = score >= 25;
+  const themeAccentColor = isHighRisk ? "#ff1a35" : "#ffffff";
+  const themeBgColor = isHighRisk ? "rgba(255, 26, 53, 0.2)" : "rgba(255, 255, 255, 0.1)";
+
   dialScore.textContent = `${score}%`;
-  dialCircle.style.borderColor = pred.badge_color;
-  dialCircle.style.color = pred.badge_color;
+  dialCircle.style.borderColor = themeAccentColor;
+  dialCircle.style.color = themeAccentColor;
+  dialCircle.style.boxShadow = isHighRisk ? "0 0 25px rgba(255, 26, 53, 0.4)" : "0 0 20px rgba(255, 255, 255, 0.2)";
 
   severityBadge.textContent = pred.severity;
-  severityBadge.style.background = `${pred.badge_color}33`;
-  severityBadge.style.color = pred.badge_color;
+  severityBadge.style.background = themeBgColor;
+  severityBadge.style.color = themeAccentColor;
+  severityBadge.style.border = `1px solid ${themeAccentColor}66`;
 
   categoryTitle.textContent = pred.category;
-  socActionText.innerHTML = `<strong>SOC Action:</strong> ${pred.soc_action}`;
+  categoryTitle.style.color = "#ffffff";
+  socActionText.innerHTML = `<strong style="color:#ffffff;">SOC Action:</strong> ${pred.soc_action}`;
   modelConfidence.textContent = `RF: ${pred.rf_confidence}% | GBM: ${pred.gb_confidence}%`;
 
   // 2. Header Authentication Matrix
@@ -306,15 +312,16 @@ function renderHeaderMatrix(headers) {
   const dmarcStatus = headers.dmarc.status.toUpperCase();
 
   spfEl.textContent = spfStatus;
-  spfEl.style.color = spfStatus === "PASS" ? "#10b981" : (spfStatus === "NONE" ? "#f59e0b" : "#ef4444");
+  spfEl.style.color = spfStatus === "PASS" ? "#ffffff" : "#ff1a35";
 
   dkimEl.textContent = dkimStatus;
-  dkimEl.style.color = dkimStatus === "PASS" ? "#10b981" : (dkimStatus === "NONE" ? "#f59e0b" : "#ef4444");
+  dkimEl.style.color = dkimStatus === "PASS" ? "#ffffff" : "#ff1a35";
 
   dmarcEl.textContent = dmarcStatus;
-  dmarcEl.style.color = dmarcStatus === "PASS" ? "#10b981" : (dmarcStatus === "NONE" ? "#f59e0b" : "#ef4444");
+  dmarcEl.style.color = dmarcStatus === "PASS" ? "#ffffff" : "#ff1a35";
 
   riskBadge.textContent = `Risk Score: ${headers.header_risk_score}/100`;
+  riskBadge.style.color = headers.header_risk_score >= 30 ? "#ff1a35" : "#ffffff";
 
   mismatchesList.innerHTML = "";
   if (headers.header_flags && headers.header_flags.length > 0) {
@@ -336,6 +343,7 @@ function renderUrlsList(urlData) {
   const countBadge = document.getElementById("urlCountBadge");
   const container = document.getElementById("urlIntelligenceList");
   countBadge.textContent = `${urlData.total_urls_found} URL(s) Detected`;
+  countBadge.style.color = urlData.total_urls_found > 0 ? "#ff1a35" : "#ffffff";
 
   container.innerHTML = "";
   if (!urlData.urls || urlData.urls.length === 0) {
@@ -348,7 +356,7 @@ function renderUrlsList(urlData) {
     const card = document.createElement("div");
     card.style.cssText = `
       background: var(--bg-input);
-      border: 1px solid ${isThreat ? '#ef4444' : 'var(--border-color)'};
+      border: 1px solid ${isThreat ? '#ff1a35' : 'var(--border-color)'};
       border-radius: 6px;
       padding: 12px;
       display: flex;
@@ -360,7 +368,7 @@ function renderUrlsList(urlData) {
     let homoglyphDetail = "None";
     if (u.homoglyphs_detected && u.homoglyphs_detected.length > 0) {
       homoglyphDetail = u.homoglyphs_detected.map(h => 
-        `<span style="background:#ef444433; color:#f87171; padding:2px 4px; border-radius:3px; font-weight:bold;">
+        `<span style="background:rgba(255,26,53,0.2); color:#ff4d66; border:1px solid rgba(255,26,53,0.4); padding:2px 4px; border-radius:3px; font-weight:bold;">
           ${h.char} (${h.unicode} resembling '${h.resembles}')
         </span>`
       ).join(" ");
@@ -368,11 +376,11 @@ function renderUrlsList(urlData) {
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-        <div style="font-family:monospace; font-size:13px; font-weight:bold; color:${isThreat ? '#f87171' : '#34d399'};">
+        <div style="font-family:monospace; font-size:13px; font-weight:bold; color:${isThreat ? '#ff1a35' : '#ffffff'};">
           ${u.url}
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
-          <span style="font-size:11px; font-weight:bold; background:${isThreat ? '#ef444433' : '#10b98133'}; color:${isThreat ? '#ef4444' : '#10b981'}; padding:3px 8px; border-radius:4px;">
+          <span style="font-size:11px; font-weight:bold; background:${isThreat ? 'rgba(255,26,53,0.2)' : 'rgba(255,255,255,0.1)'}; color:${isThreat ? '#ff1a35' : '#ffffff'}; border:1px solid ${isThreat ? '#ff1a3566' : '#ffffff44'}; padding:3px 8px; border-radius:4px;">
             ${u.risk_score}% Risk
           </span>
           <button class="btn btn-outline btn-sm sandbox-btn" data-url="${encodeURIComponent(u.url)}">
@@ -382,14 +390,14 @@ function renderUrlsList(urlData) {
       </div>
 
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; font-size:11.5px;">
-        <div><span style="color:var(--text-muted);">Punycode:</span> <strong>${u.is_punycode ? u.decoded_punycode : 'Standard ASCII'}</strong></div>
+        <div><span style="color:var(--text-muted);">Punycode:</span> <strong style="color:#ffffff;">${u.is_punycode ? u.decoded_punycode : 'Standard ASCII'}</strong></div>
         <div><span style="color:var(--text-muted);">Homoglyphs:</span> <strong>${homoglyphDetail}</strong></div>
-        <div><span style="color:var(--text-muted);">Brand Target:</span> <strong style="color:${u.typosquat_target ? '#f87171' : 'inherit'};">${u.typosquat_target || 'None'}</strong></div>
-        <div><span style="color:var(--text-muted);">Shannon Entropy:</span> <strong>${u.entropy_domain}</strong></div>
+        <div><span style="color:var(--text-muted);">Brand Target:</span> <strong style="color:${u.typosquat_target ? '#ff1a35' : '#ffffff'};">${u.typosquat_target || 'None'}</strong></div>
+        <div><span style="color:var(--text-muted);">Shannon Entropy:</span> <strong style="color:#ffffff;">${u.entropy_domain}</strong></div>
       </div>
 
       ${u.risk_reasons && u.risk_reasons.length > 0 ? `
-        <div style="font-size:11px; color:#f87171; border-top:1px dashed #334155; padding-top:6px;">
+        <div style="font-size:11px; color:#ff4d66; border-top:1px dashed #222222; padding-top:6px;">
           <strong>Threat Flags:</strong> ${u.risk_reasons.join(" &bull; ")}
         </div>
       ` : ''}
@@ -413,21 +421,21 @@ function renderNlpHeatmap(nlp, dom, textSnippet) {
 
   const counts = nlp.counts || {};
   summaryBar.innerHTML = `
-    <div style="background:var(--bg-input); padding:6px 12px; border-radius:4px; font-size:12px;">
+    <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Urgency Triggers:</span>
-      <strong style="color:${counts.urgency > 0 ? '#f59e0b' : '#10b981'};">${counts.urgency || 0}</strong>
+      <strong style="color:${counts.urgency > 0 ? '#ff1a35' : '#ffffff'};">${counts.urgency || 0}</strong>
     </div>
-    <div style="background:var(--bg-input); padding:6px 12px; border-radius:4px; font-size:12px;">
+    <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Fear / Disciplinary:</span>
-      <strong style="color:${counts.fear > 0 ? '#ef4444' : '#10b981'};">${counts.fear || 0}</strong>
+      <strong style="color:${counts.fear > 0 ? '#ff1a35' : '#ffffff'};">${counts.fear || 0}</strong>
     </div>
-    <div style="background:var(--bg-input); padding:6px 12px; border-radius:4px; font-size:12px;">
+    <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Credential Solicitation:</span>
-      <strong style="color:${counts.credential > 0 ? '#a855f7' : '#10b981'};">${counts.credential > 0 ? 'YES' : 'NONE'}</strong>
+      <strong style="color:${counts.credential > 0 ? '#ff1a35' : '#ffffff'};">${counts.credential > 0 ? 'YES' : 'NONE'}</strong>
     </div>
-    <div style="background:var(--bg-input); padding:6px 12px; border-radius:4px; font-size:12px;">
+    <div style="background:var(--bg-input); border:1px solid var(--border-color); padding:6px 12px; border-radius:4px; font-size:12px;">
       <span style="color:var(--text-muted);">Anti-Spam Hidden Text:</span>
-      <strong style="color:${dom.hidden_elements_count > 0 ? '#ef4444' : '#10b981'};">${dom.hidden_elements_count || 0}</strong>
+      <strong style="color:${dom.hidden_elements_count > 0 ? '#ff1a35' : '#ffffff'};">${dom.hidden_elements_count || 0}</strong>
     </div>
   `;
 
@@ -461,10 +469,10 @@ function renderXaiAttribution(contributions) {
 
     item.innerHTML = `
       <div class="xai-bar-label">
-        <span style="font-weight:600; color:${c.is_critical ? '#f87171' : 'var(--text-main)'};">
+        <span style="font-weight:600; color:${c.is_critical ? '#ff4d66' : 'var(--text-main)'};">
           ${c.title}
         </span>
-        <strong style="color:${c.is_critical ? '#ef4444' : '#38bdf8'}; font-family:monospace;">
+        <strong style="color:${c.is_critical ? '#ff1a35' : '#ffffff'}; font-family:monospace;">
           +${c.impact_percentage}%
         </strong>
       </div>
@@ -487,19 +495,27 @@ function renderUrlDeepDiveResults(data) {
   const dialScore = document.getElementById("dialScore");
   const dialCircle = document.getElementById("dialCircle");
   dialScore.textContent = `${data.risk_score}%`;
-  dialCircle.style.borderColor = data.risk_score >= 50 ? "#ef4444" : "#10b981";
-  dialCircle.style.color = data.risk_score >= 50 ? "#ef4444" : "#10b981";
+  const isHigh = data.risk_score >= 25;
+  dialCircle.style.borderColor = isHigh ? "#ff1a35" : "#ffffff";
+  dialCircle.style.color = isHigh ? "#ff1a35" : "#ffffff";
+  dialCircle.style.boxShadow = isHigh ? "0 0 25px rgba(255, 26, 53, 0.4)" : "0 0 15px rgba(255, 255, 255, 0.2)";
 }
 
 function renderTextAnalysisResults(data, rawText) {
   renderNlpHeatmap(data.nlp, { hidden_elements_count: 0 }, rawText);
   const pred = data.prediction;
+  const isHigh = pred.threat_score >= 25;
+  const accentColor = isHigh ? "#ff1a35" : "#ffffff";
+  const bgAccent = isHigh ? "rgba(255, 26, 53, 0.2)" : "rgba(255, 255, 255, 0.1)";
+
   document.getElementById("dialScore").textContent = `${pred.threat_score}%`;
-  document.getElementById("dialCircle").style.borderColor = pred.badge_color;
-  document.getElementById("dialCircle").style.color = pred.badge_color;
+  document.getElementById("dialCircle").style.borderColor = accentColor;
+  document.getElementById("dialCircle").style.color = accentColor;
   document.getElementById("severityBadge").textContent = pred.severity;
+  document.getElementById("severityBadge").style.background = bgAccent;
+  document.getElementById("severityBadge").style.color = accentColor;
   document.getElementById("categoryTitle").textContent = pred.category;
-  document.getElementById("socActionText").innerHTML = `<strong>SOC Action:</strong> ${pred.soc_action}`;
+  document.getElementById("socActionText").innerHTML = `<strong style="color:#ffffff;">SOC Action:</strong> ${pred.soc_action}`;
   renderXaiAttribution(pred.feature_contributions);
 }
 
@@ -552,7 +568,7 @@ async function openSandboxModal(targetUrl) {
   const sbFormAction = document.getElementById("sbFormAction");
   const renderContainer = document.getElementById("sbRenderContainer");
 
-  renderContainer.innerHTML = "<div style='text-align:center; padding:40px;'>Isolating virtual container and analyzing DOM...</div>";
+  renderContainer.innerHTML = "<div style='text-align:center; padding:40px; color:#ffffff;'>Isolating virtual container and analyzing DOM...</div>";
   modal.classList.add("active");
 
   try {
@@ -570,7 +586,7 @@ async function openSandboxModal(targetUrl) {
 
     renderContainer.innerHTML = data.sandboxed_html;
   } catch (err) {
-    renderContainer.innerHTML = "<div style='color:red;'>Failed to load sandbox container.</div>";
+    renderContainer.innerHTML = "<div style='color:#ff1a35;'>Failed to load sandbox container.</div>";
   }
 }
 

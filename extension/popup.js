@@ -1,4 +1,4 @@
-// Scam Detective Popup Logic
+// Trac-I Popup Logic
 const API_BASE = "http://localhost:8000";
 
 // Confusable homoglyphs map for client-side heuristic backup
@@ -176,7 +176,7 @@ function renderScanResults(data) {
 
   if (data.risk_reasons && data.risk_reasons.length > 0) {
     quickResult.style.display = "block";
-    quickResult.innerHTML = `<strong style="color:#f87171;">Threat Indicators:</strong><br>&bull; ${data.risk_reasons.join("<br>&bull; ")}`;
+    quickResult.innerHTML = `<strong style="color:#ff4d66;">Threat Indicators:</strong><br>&bull; ${data.risk_reasons.join("<br>&bull; ")}`;
   } else {
     quickResult.style.display = "none";
   }

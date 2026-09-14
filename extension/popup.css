@@ -1,15 +1,15 @@
-/* Scam Detective Chrome Extension Styling */
+/* Trac-I Chrome Extension Styling - Strict Black, Red & White */
 :root {
-  --primary: #0b2545;
-  --accent: #0284c7;
-  --bg: #0f172a;
-  --card-bg: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --safe: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --border: #334155;
+  --primary: #000000;
+  --accent: #ff1a35;
+  --bg: #000000;
+  --card-bg: #0a0a0a;
+  --text-main: #ffffff;
+  --text-muted: #a3a3a3;
+  --safe: #ffffff;
+  --warning: #ff4d66;
+  --danger: #ff1a35;
+  --border: #222222;
 }
 
 * {
@@ -49,14 +49,15 @@ body {
 }
 
 .shield-icon {
-  background: linear-gradient(135deg, #0284c7, #0369a1);
-  color: white;
+  background: linear-gradient(135deg, #ff1a35, #7f1d1d);
+  color: #ffffff;
   width: 30px;
   height: 30px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(255, 26, 53, 0.4);
 }
 
 .brand-name {
@@ -68,8 +69,9 @@ body {
 
 .version-tag {
   font-size: 10px;
-  background-color: #334155;
-  color: #38bdf8;
+  background-color: rgba(255, 26, 53, 0.2);
+  color: #ff1a35;
+  border: 1px solid rgba(255, 26, 53, 0.4);
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 600;
@@ -95,18 +97,19 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease;
 }
 
 .score-circle.warning {
   border-color: var(--warning);
-  background: rgba(245, 158, 11, 0.08);
+  background: rgba(255, 77, 102, 0.12);
 }
 
 .score-circle.danger {
   border-color: var(--danger);
-  background: rgba(239, 68, 68, 0.08);
+  background: rgba(255, 26, 53, 0.15);
+  box-shadow: 0 0 14px rgba(255, 26, 53, 0.3);
 }
 
 .score-value {
@@ -139,18 +142,21 @@ body {
 }
 
 .status-badge.safe {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .status-badge.warning {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
+  background: rgba(255, 77, 102, 0.2);
+  color: #ff4d66;
+  border: 1px solid rgba(255, 77, 102, 0.4);
 }
 
 .status-badge.danger {
-  background: rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: rgba(255, 26, 53, 0.25);
+  color: #ff1a35;
+  border: 1px solid rgba(255, 26, 53, 0.5);
 }
 
 .target-domain {
@@ -190,11 +196,11 @@ body {
 }
 
 .metric-value.safe-text {
-  color: #34d399;
+  color: #ffffff;
 }
 
 .metric-value.danger-text {
-  color: #f87171;
+  color: #ff1a35;
 }
 
 /* Quick Scan */
@@ -211,7 +217,7 @@ body {
 
 .input-wrap input {
   flex: 1;
-  background: #1e293b;
+  background: #000000;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 10px;
@@ -221,11 +227,12 @@ body {
 }
 
 .input-wrap input:focus {
-  border-color: #0284c7;
+  border-color: #ff1a35;
+  box-shadow: 0 0 6px rgba(255, 26, 53, 0.3);
 }
 
 .input-wrap button {
-  background: #0284c7;
+  background: linear-gradient(135deg, #ff1a35, #b91c1c);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -233,11 +240,11 @@ body {
   font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .input-wrap button:hover {
-  background: #0369a1;
+  background: linear-gradient(135deg, #ff3b53, #dc2626);
 }
 
 .quick-result-box {
@@ -245,7 +252,7 @@ body {
   border-radius: 6px;
   font-size: 11px;
   line-height: 1.4;
-  background: #1e293b;
+  background: #000000;
   border: 1px solid var(--border);
 }
 
@@ -256,9 +263,9 @@ body {
 
 .primary-btn {
   width: 100%;
-  background: #0b2545;
-  border: 1px solid #1e3a8a;
-  color: #93c5fd;
+  background: #000000;
+  border: 1px solid #ff1a35;
+  color: #ffffff;
   padding: 9px 12px;
   border-radius: 6px;
   font-size: 12px;
@@ -272,7 +279,7 @@ body {
 }
 
 .primary-btn:hover {
-  background: #172554;
+  background: #ff1a35;
   color: #ffffff;
-  border-color: #3b82f6;
+  box-shadow: 0 0 12px rgba(255, 26, 53, 0.4);
 }

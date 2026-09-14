@@ -4,7 +4,7 @@ import zipfile
 
 def package_extension():
     ext_dir = "extension"
-    out_zip = "static/downloads/scam-detective-extension.zip"
+    out_zip = "static/downloads/trac-i-extension.zip"
     os.makedirs(os.path.dirname(out_zip), exist_ok=True)
     
     with zipfile.ZipFile(out_zip, "w", zipfile.ZIP_DEFLATED) as zf:

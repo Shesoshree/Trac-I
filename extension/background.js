@@ -1,6 +1,6 @@
-// Scam Detective Service Worker (Manifest V3)
+// Trac-I Service Worker (Manifest V3)
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Scam Detective Extension installed successfully.");
+  console.log("Trac-I Extension installed successfully.");
 });
 
 // Listen for messages from content script or popup if needed
